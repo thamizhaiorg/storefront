@@ -1,0 +1,305 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+const { storeId } = Astro.params;
+
+// Set to false to enable server-side rendering for dynamic routes
+export const prerender = false;
+---
+
+<Layout title="Checkout">
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+        <p class="mt-2 text-gray-600">Complete your order</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Order Form -->
+        <div class="bg-white shadow-sm rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">Order Information</h2>
+
+          <form id="checkout-form" class="space-y-6">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter your email address"
+              />
+            </div>
+
+            <div>
+              <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter your phone number"
+              />
+            </div>
+
+            <div>
+              <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                Shipping Address
+              </label>
+              <textarea
+                id="address"
+                name="address"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter your shipping address"
+              ></textarea>
+            </div>
+
+            <div>
+              <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                Order Notes (Optional)
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Any special instructions for your order"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full bg-indigo-600 text-white py-3 px-4 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Place Order
+            </button>
+          </form>
+
+          <div id="message" class="mt-4 text-center"></div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="bg-white shadow-sm rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">Order Summary</h2>
+
+          <!-- Loading State -->
+          <div id="summary-loading" class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            <p class="mt-2 text-gray-600">Loading order summary...</p>
+          </div>
+
+          <!-- Empty Cart -->
+          <div id="empty-summary" class="hidden text-center py-8">
+            <p class="text-gray-600">Your cart is empty</p>
+            <a
+              href={`/store/${storeId}/products`}
+              class="inline-block mt-4 text-indigo-600 hover:text-indigo-500"
+            >
+              Continue Shopping
+            </a>
+          </div>
+
+          <!-- Order Items -->
+          <div id="order-items" class="hidden">
+            <div id="items-list" class="space-y-4 mb-6">
+              <!-- Items will be populated here -->
+            </div>
+
+            <div class="border-t border-gray-200 pt-4 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Subtotal</span>
+                <span id="summary-subtotal">$0.00</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Shipping</span>
+                <span class="text-gray-600">Calculated after order</span>
+              </div>
+              <div class="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">
+                <span>Total</span>
+                <span id="summary-total">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script type="module" is:inline>
+  const storeId = `{storeId}`;
+
+  // State
+  let cart = {};
+  let products = {};
+
+  // DOM elements
+  const summaryLoadingEl = document.getElementById('summary-loading');
+  const emptySummaryEl = document.getElementById('empty-summary');
+  const orderItemsEl = document.getElementById('order-items');
+  const itemsListEl = document.getElementById('items-list');
+  const summarySubtotalEl = document.getElementById('summary-subtotal');
+  const summaryTotalEl = document.getElementById('summary-total');
+  const checkoutForm = document.getElementById('checkout-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const messageEl = document.getElementById('message');
+
+  // Fetch product details
+  async function fetchProduct(productId) {
+    if (products[productId]) {
+      return products[productId];
+    }
+
+    try {
+      const response = await fetch(`/api/product?productId=${productId}`);
+      if (response.ok) {
+        const product = await response.json();
+        products[productId] = product;
+        return product;
+      }
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    }
+    return null;
+  }
+
+  // Create order item HTML
+  function createOrderItemHTML(product, quantity) {
+    const itemTotal = (product.price * quantity).toFixed(2);
+
+    return `
+      <div class="flex items-center space-x-4">
+        <div class="flex-shrink-0">
+          <img
+            src="${product.imageUrl || '/placeholder-product.jpg'}"
+            alt="${product.name}"
+            class="w-16 h-16 object-cover rounded-md"
+          />
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="text-sm font-medium text-gray-900 truncate">${product.name}</h4>
+          <p class="text-sm text-gray-600">Qty: ${quantity}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-medium text-gray-900">$${itemTotal}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render order summary
+  async function renderOrderSummary() {
+    // Load cart from localStorage
+    cart = JSON.parse(localStorage.getItem('cart') || '{}');
+
+    // Check if cart is empty
+    if (Object.keys(cart).length === 0) {
+      summaryLoadingEl.classList.add('hidden');
+      emptySummaryEl.classList.remove('hidden');
+      orderItemsEl.classList.add('hidden');
+      return;
+    }
+
+    // Show order items
+    summaryLoadingEl.classList.add('hidden');
+    emptySummaryEl.classList.add('hidden');
+    orderItemsEl.classList.remove('hidden');
+
+    // Render order items
+    let itemsHTML = '';
+    let subtotal = 0;
+
+    for (const [productId, quantity] of Object.entries(cart)) {
+      const product = await fetchProduct(productId);
+      if (product) {
+        itemsHTML += createOrderItemHTML(product, quantity);
+        subtotal += product.price * quantity;
+      }
+    }
+
+    itemsListEl.innerHTML = itemsHTML;
+    summarySubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+    summaryTotalEl.textContent = `$${subtotal.toFixed(2)}`;
+  }
+
+  // Handle form submission
+  checkoutForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Check if cart is empty
+    if (Object.keys(cart).length === 0) {
+      messageEl.innerHTML = '<span class="text-red-600">Your cart is empty</span>';
+      return;
+    }
+
+    // Get form data
+    const formData = new FormData(checkoutForm);
+    const orderData = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      address: formData.get('address'),
+      notes: formData.get('notes'),
+      cart: cart,
+      storeId: storeId
+    };
+
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+    messageEl.innerHTML = '';
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        messageEl.innerHTML = `<span class="text-green-600">${data.message}</span>`;
+        localStorage.removeItem('cart');
+
+        // Redirect to success page after a delay
+        setTimeout(() => {
+          window.location.href = `/store/${storeId}?order=success`;
+        }, 2000);
+      } else {
+        messageEl.innerHTML = `<span class="text-red-600">${data.message}</span>`;
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      messageEl.innerHTML = '<span class="text-red-600">Network error. Please try again.</span>';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Place Order';
+    }
+  });
+
+  // Initialize
+  renderOrderSummary();
+</script>

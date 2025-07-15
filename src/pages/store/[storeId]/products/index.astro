@@ -1,0 +1,383 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+
+const { storeId } = Astro.params;
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
+
+// Set to false to enable server-side rendering for dynamic routes
+export const prerender = false;
+---
+
+<Layout title="Products - Store">
+  <div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Product Catalog</h1>
+            <p id="store-info" class="text-gray-600 mt-1">Loading store information...</p>
+          </div>
+          <div class="flex space-x-4">
+            <a href={`/store/${storeId}/`} class="text-indigo-600 hover:text-indigo-500">← Back to Store</a>
+            <div id="auth-actions">
+              <!-- Auth actions will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Loading State -->
+      <div id="products-loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading products...</p>
+      </div>
+
+      <!-- Products Grid -->
+      <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden"></div>
+
+      <!-- Empty State -->
+      <div id="products-empty" class="text-center py-12 hidden">
+        <div class="text-gray-400 mb-4">
+          <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No products available</h3>
+        <p class="text-gray-600">This store doesn't have any products yet. Check back soon!</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="products-error" class="text-center py-12 hidden">
+        <div class="text-red-400 mb-4">
+          <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Unable to load products</h3>
+        <p class="text-gray-600">Please try refreshing the page</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script is:inline define:vars={{ appId, storeId }}>
+  // Set global variables
+  window.INSTANT_APP_ID = appId;
+  window.STORE_ID = storeId;
+</script>
+
+<script type="module" is:inline>
+  import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+  // Get store ID from global variable
+  const storeId = window.STORE_ID;
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      blocks: i.entity({
+        type: i.string(),
+        pageId: i.string(),
+        order: i.number(),
+        content: i.json().optional(),
+        style: i.json().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        category: i.string().optional(),
+        inStock: i.boolean().optional(),
+        createdAt: i.date(),
+      }),
+      cartItems: i.entity({
+        productId: i.string(),
+        quantity: i.number(),
+        userId: i.string().optional(),
+        sessionId: i.string().optional(),
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+      orders: i.entity({
+        customerName: i.string(),
+        customerEmail: i.string(),
+        items: i.json(), // Array of {productId, quantity, price}
+        total: i.number(),
+        status: i.string(), // 'pending', 'confirmed', 'shipped', 'delivered'
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+    },
+    links: {
+      storePages: {
+        forward: { on: 'storefronts', has: 'many', label: 'pages' },
+        reverse: { on: 'pages', has: 'one', label: 'store' },
+      },
+      storeProducts: {
+        forward: { on: 'storefronts', has: 'many', label: 'products' },
+        reverse: { on: 'products', has: 'one', label: 'store' },
+      },
+      pageBlocks: {
+        forward: { on: 'pages', has: 'many', label: 'blocks' },
+        reverse: { on: 'blocks', has: 'one', label: 'page' },
+      },
+      storeOrders: {
+        forward: { on: 'storefronts', has: 'many', label: 'orders' },
+        reverse: { on: 'orders', has: 'one', label: 'store' },
+      },
+      storeCartItems: {
+        forward: { on: 'storefronts', has: 'many', label: 'cartItems' },
+        reverse: { on: 'cartItems', has: 'one', label: 'store' },
+      },
+    },
+  });
+
+  const db = init({
+    appId: window.INSTANT_APP_ID,
+    schema
+  });
+
+  // Store the DB instance globally
+  window.INSTANT_DB_INSTANCE = db;
+
+  let currentUser = null;
+  let currentStore = null;
+  let storeUnsubscribe = null;
+  let productsUnsubscribe = null;
+
+  // DOM elements
+  const productsLoadingEl = document.getElementById('products-loading');
+  const productsGridEl = document.getElementById('products-grid');
+  const productsEmptyEl = document.getElementById('products-empty');
+  const productsErrorEl = document.getElementById('products-error');
+  const storeInfoEl = document.getElementById('store-info');
+  const authActionsEl = document.getElementById('auth-actions');
+
+  // Show/hide elements
+  function showElement(el) {
+    el.classList.remove('hidden');
+  }
+
+  function hideElement(el) {
+    el.classList.add('hidden');
+  }
+
+  // Update auth actions
+  function updateAuthActions() {
+    if (currentUser) {
+      authActionsEl.innerHTML = `
+        <div class="flex items-center space-x-4">
+          <span class="text-gray-700">Welcome, ${currentUser.email}</span>
+          <button id="sign-out-btn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+            Sign Out
+          </button>
+        </div>
+      `;
+      document.getElementById('sign-out-btn')?.addEventListener('click', signOut);
+    } else {
+      authActionsEl.innerHTML = `
+        <a href="/auth/login" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+          Sign In
+        </a>
+      `;
+    }
+  }
+
+  // Sign out
+  async function signOut() {
+    try {
+      await db.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  }
+
+  // Load store info
+  function loadStore() {
+    if (storeUnsubscribe) {
+      storeUnsubscribe();
+    }
+
+    storeUnsubscribe = db.subscribeQuery({
+      storefronts: {
+        $: { where: { id: storeId } }
+      }
+    }, (resp) => {
+      if (resp.error) {
+        console.error('Error loading store:', resp.error);
+        storeInfoEl.textContent = 'Error loading store information';
+        return;
+      }
+
+      const stores = resp.data?.storefronts || [];
+      currentStore = stores[0];
+
+      if (currentStore) {
+        storeInfoEl.textContent = `Store: ${currentStore.name}`;
+      } else {
+        storeInfoEl.textContent = 'Store not found';
+      }
+    });
+  }
+
+  // Load products using proper InstaQL
+  function loadProducts() {
+    if (productsUnsubscribe) {
+      productsUnsubscribe();
+    }
+
+    // Use proper InstaQL query with filtering and ordering
+    const productsQuery = {
+      products: {
+        $: {
+          where: { storeId },
+          order: { serverCreatedAt: 'desc' }
+        }
+      }
+    };
+
+    productsUnsubscribe = db.subscribeQuery(productsQuery, (resp) => {
+      hideElement(productsLoadingEl);
+
+      if (resp.error) {
+        console.error('Error loading products:', resp.error);
+        showElement(productsErrorEl);
+        return;
+      }
+
+      const products = resp.data?.products || [];
+
+      if (products.length === 0) {
+        showElement(productsEmptyEl);
+        return;
+      }
+
+      // Render products with enhanced information
+      productsGridEl.innerHTML = products.map(product => `
+        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+          <div class="h-48 bg-gray-200 flex items-center justify-center relative">
+            ${product.imageUrl ?
+              `<img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover" />` :
+              `<div class="text-gray-400 text-center">
+                <svg class="mx-auto h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <p class="text-sm">No Image</p>
+              </div>`
+            }
+            ${product.category ? `
+              <div class="absolute top-2 left-2 bg-indigo-600 text-white px-2 py-1 rounded-md text-xs font-medium">
+                ${product.category}
+              </div>
+            ` : ''}
+            ${product.inStock === false ? `
+              <div class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-md text-xs font-medium">
+                Out of Stock
+              </div>
+            ` : ''}
+          </div>
+          <div class="p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">${product.name}</h3>
+            <p class="text-gray-600 mb-4 line-clamp-2">${product.description || 'No description available'}</p>
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-2xl font-bold text-indigo-600">$${product.price.toFixed(2)}</span>
+              ${product.inStock !== false ? `
+                <button
+                  onclick="addToCart('${product.id}', '${product.name}', ${product.price})"
+                  class="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700 transition-colors"
+                >
+                  Add to Cart
+                </button>
+              ` : `
+                <button
+                  disabled
+                  class="bg-gray-400 text-white px-4 py-2 rounded-md font-medium cursor-not-allowed"
+                >
+                  Out of Stock
+                </button>
+              `}
+            </div>
+            <a
+              href="/store/${storeId}/products/${product.id}"
+              class="block w-full text-center bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 transition-colors"
+            >
+                View Details
+              </a>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      showElement(productsGridEl);
+    });
+  }
+
+  // Cart functionality - make it globally available
+  window.addToCart = function(productId, productName, productPrice) {
+    if (!currentUser && !sessionId) {
+      // Generate a session ID if user is not logged in
+      sessionId = 'session_' + Math.random().toString(36).substring(2, 15);
+    }
+
+    const userId = currentUser?.id;
+
+    // Add to cart using InstantDB
+    db.transact(
+      db.tx.cartItems[db.id()].update({
+        productId,
+        quantity: 1,
+        userId,
+        sessionId: !userId ? sessionId : undefined,
+        storeId,
+        createdAt: Date.now()
+      })
+    ).then(() => {
+      alert(`Added ${productName} to cart!`);
+    }).catch(error => {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
+    });
+  }
+
+  // Initialize
+  let sessionId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check auth state
+    async function checkAuthState() {
+      try {
+        const auth = await db.getAuth();
+        currentUser = auth;
+        updateAuthActions();
+      } catch (error) {
+        console.error('Error getting auth state:', error);
+      }
+    }
+
+    checkAuthState();
+    setInterval(checkAuthState, 30000);
+
+    // Load store and products
+    loadStore();
+    loadProducts();
+  });
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    if (storeUnsubscribe) storeUnsubscribe();
+    if (productsUnsubscribe) productsUnsubscribe();
+  });
+</script>

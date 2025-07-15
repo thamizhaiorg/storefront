@@ -1,0 +1,210 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
+
+export const prerender = true;
+---
+
+<Layout title="Login - Storefront">
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <div>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Sign in to your account
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+          Enter your email and we'll send you a magic code
+        </p>
+      </div>
+
+      <div id="email-step">
+        <form id="login-form" class="mt-8 space-y-6">
+          <div>
+            <label for="email" class="sr-only">Email address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Enter your email address"
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              id="submit-btn"
+            >
+              Send Magic Code
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="code-step" class="hidden">
+        <form id="verify-form" class="mt-8 space-y-6">
+          <div>
+            <label for="code" class="sr-only">Magic Code</label>
+            <input
+              id="code"
+              name="code"
+              type="text"
+              required
+              class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="Enter the magic code"
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              id="verify-btn"
+            >
+              Verify Code
+            </button>
+          </div>
+        </form>
+        <div class="mt-4 text-center">
+          <button
+            id="back-btn"
+            class="text-indigo-600 hover:text-indigo-500 text-sm"
+          >
+            ← Back to email
+          </button>
+        </div>
+      </div>
+
+      <div id="message" class="text-center text-sm"></div>
+    </div>
+  </div>
+</Layout>
+
+<script is:inline define:vars={{ appId }}>
+  // Set the app ID as a global variable
+  window.INSTANT_APP_ID = appId;
+</script>
+
+<script type="module" is:inline>
+  // Import InstantDB from CDN
+  import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      blocks: i.entity({
+        type: i.string(),
+        pageId: i.string(),
+        order: i.number(),
+        content: i.json().optional(),
+        style: i.json().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      orders: i.entity({
+        name: i.string(),
+        email: i.string(),
+        cart: i.json(),
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+    },
+  });
+
+  const db = init({
+    appId: window.INSTANT_APP_ID,
+    schema
+  });
+
+  // Store the DB instance globally for other scripts to use
+  window.INSTANT_DB_INSTANCE = db;
+
+  let sentEmail = '';
+
+  // Email form submission
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const submitBtn = document.getElementById('submit-btn');
+    const messageDiv = document.getElementById('message');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    messageDiv.textContent = '';
+
+    try {
+      console.log('Attempting to send magic code for:', email);
+      await db.auth.sendMagicCode({ email });
+      console.log('Magic code sent successfully');
+
+      sentEmail = email;
+      document.getElementById('email-step').classList.add('hidden');
+      document.getElementById('code-step').classList.remove('hidden');
+      messageDiv.innerHTML = `<span class="text-green-600">Magic code sent to your email!</span>`;
+      document.getElementById('code').focus();
+    } catch (authError) {
+      console.error('Auth error details:', authError);
+      messageDiv.innerHTML = `<span class="text-red-600">${authError.body?.message || authError.message || 'Failed to send magic code'}</span>`;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send Magic Code';
+    }
+  });
+
+  // Code verification
+  document.getElementById('verify-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const code = document.getElementById('code').value;
+    const verifyBtn = document.getElementById('verify-btn');
+    const messageDiv = document.getElementById('message');
+
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = 'Verifying...';
+    messageDiv.textContent = '';
+
+    try {
+      const result = await db.auth.signInWithMagicCode({ email: sentEmail, code });
+      messageDiv.innerHTML = `<span class="text-green-600">Login successful!</span>`;
+
+      // Store user info if needed
+      if (result.user) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+      }
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    } catch (authError) {
+      console.error('Auth error:', authError);
+      messageDiv.innerHTML = `<span class="text-red-600">${authError.body?.message || 'Invalid magic code'}</span>`;
+      document.getElementById('code').value = '';
+      document.getElementById('code').focus();
+    } finally {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Verify Code';
+    }
+  });
+
+  // Back button
+  document.getElementById('back-btn').addEventListener('click', () => {
+    document.getElementById('code-step').classList.add('hidden');
+    document.getElementById('email-step').classList.remove('hidden');
+    document.getElementById('message').textContent = '';
+    document.getElementById('code').value = '';
+    document.getElementById('email').focus();
+  });
+</script>

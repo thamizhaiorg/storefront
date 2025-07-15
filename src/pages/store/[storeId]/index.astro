@@ -1,0 +1,459 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+
+const { storeId } = Astro.params;
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
+
+// Set to false to enable server-side rendering for dynamic routes
+export const prerender = false;
+---
+<Layout title="Store - Storefront">
+  <div class="min-h-screen bg-gray-50">
+    <!-- Loading State -->
+    <div id="store-loading" class="text-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+      <p class="text-gray-600">Loading store...</p>
+    </div>
+
+    <!-- Store Not Found -->
+    <div id="store-not-found" class="text-center py-12 hidden">
+      <div class="text-gray-400 mb-4">
+        <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">Store Not Found</h3>
+      <p class="text-gray-600 mb-4">The store you're looking for doesn't exist or has been removed.</p>
+      <a href="/" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+        Back to Home
+      </a>
+    </div>
+
+    <!-- Store Content -->
+    <div id="store-content" class="hidden">
+      <!-- Store Header -->
+      <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 id="store-name" class="text-3xl font-bold text-gray-900"></h1>
+              <p id="store-domain" class="text-gray-600 mt-1"></p>
+            </div>
+            <div class="flex space-x-4">
+              <a href="/" class="text-indigo-600 hover:text-indigo-500">← Back to All Stores</a>
+              <div id="auth-actions">
+                <!-- Auth actions will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Store Body -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Default content when no blocks are available -->
+        <div id="default-content">
+          <div class="text-center py-16">
+            <div class="text-gray-400 mb-4">
+              <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Welcome to Our Store</h2>
+            <p class="text-gray-600 mb-8 max-w-2xl mx-auto">
+              This store is currently being set up. Check back soon for amazing products and deals!
+            </p>
+            <div class="flex justify-center space-x-4">
+              <a href="/store/{storeId}/products/" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+                Browse Products
+              </a>
+              <a href="/dashboard" class="border border-indigo-600 text-indigo-600 px-6 py-3 rounded-md hover:bg-indigo-50 transition-colors">
+                Manage Store
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic blocks will be rendered here -->
+        <div id="blocks-root"></div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script is:inline define:vars={{ appId }}>
+  // Set the app ID as a global variable
+  window.INSTANT_APP_ID = appId;
+</script>
+
+<script type="module" is:inline>
+  import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+  // Get store ID from URL
+  const storeId = window.location.pathname.split('/')[2];
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        logoUrl: i.string().optional(),
+        themeColor: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      pages: i.entity({
+        title: i.string(),
+        slug: i.string(),
+        storeId: i.string(),
+        isHomePage: i.boolean().optional(),
+        createdAt: i.date(),
+      }),
+      blocks: i.entity({
+        type: i.string(), // 'hero', 'text', 'product-grid', 'image', etc.
+        pageId: i.string(),
+        order: i.number(),
+        content: i.json().optional(),
+        style: i.json().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        category: i.string().optional(),
+        inStock: i.boolean().optional(),
+        createdAt: i.date(),
+      }),
+      cartItems: i.entity({
+        productId: i.string(),
+        quantity: i.number(),
+        userId: i.string().optional(),
+        sessionId: i.string().optional(),
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+      orders: i.entity({
+        customerName: i.string(),
+        customerEmail: i.string(),
+        items: i.json(), // Array of {productId, quantity, price}
+        total: i.number(),
+        status: i.string(), // 'pending', 'confirmed', 'shipped', 'delivered'
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+    },
+    links: {
+      storePages: {
+        forward: { on: 'storefronts', has: 'many', label: 'pages' },
+        reverse: { on: 'pages', has: 'one', label: 'store' },
+      },
+      storeProducts: {
+        forward: { on: 'storefronts', has: 'many', label: 'products' },
+        reverse: { on: 'products', has: 'one', label: 'store' },
+      },
+      pageBlocks: {
+        forward: { on: 'pages', has: 'many', label: 'blocks' },
+        reverse: { on: 'blocks', has: 'one', label: 'page' },
+      },
+      storeOrders: {
+        forward: { on: 'storefronts', has: 'many', label: 'orders' },
+        reverse: { on: 'orders', has: 'one', label: 'store' },
+      },
+      storeCartItems: {
+        forward: { on: 'storefronts', has: 'many', label: 'cartItems' },
+        reverse: { on: 'cartItems', has: 'one', label: 'store' },
+      },
+    },
+  });
+
+  const db = init({
+    appId: window.INSTANT_APP_ID,
+    schema
+  });
+
+  // Store the DB instance globally for other scripts to use
+  window.INSTANT_DB_INSTANCE = db;
+
+  let currentUser = null;
+  let currentStore = null;
+  let storeUnsubscribe = null;
+
+  // DOM elements
+  const storeLoadingEl = document.getElementById('store-loading');
+  const storeNotFoundEl = document.getElementById('store-not-found');
+  const storeContentEl = document.getElementById('store-content');
+  const storeNameEl = document.getElementById('store-name');
+  const storeDomainEl = document.getElementById('store-domain');
+  const authActionsEl = document.getElementById('auth-actions');
+  const defaultContentEl = document.getElementById('default-content');
+  const blocksRootEl = document.getElementById('blocks-root');
+
+  // Show/hide elements
+  function showElement(el) {
+    el.classList.remove('hidden');
+  }
+
+  function hideElement(el) {
+    el.classList.add('hidden');
+  }
+
+  // Update auth actions
+  function updateAuthActions() {
+    if (currentUser) {
+      authActionsEl.innerHTML = `
+        <div class="flex items-center space-x-4">
+          <span class="text-gray-700">Welcome, ${currentUser.email}</span>
+          <button id="sign-out-btn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+            Sign Out
+          </button>
+        </div>
+      `;
+      document.getElementById('sign-out-btn')?.addEventListener('click', signOut);
+    } else {
+      authActionsEl.innerHTML = `
+        <a href="/auth/login" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+          Sign In
+        </a>
+      `;
+    }
+  }
+
+  // Sign out
+  async function signOut() {
+    try {
+      await db.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  }
+
+  // Load store data with products and pages using proper InstaQL
+  function loadStore() {
+    if (storeUnsubscribe) {
+      storeUnsubscribe();
+    }
+
+    // Use simplified InstaQL query - no nested limits/orders
+    const storeQuery = {
+      storefronts: {
+        $: {
+          where: { id: storeId },
+          fields: ['name', 'description', 'customDomain', 'logoUrl', 'themeColor', 'homePageId']
+        },
+        products: {}, // Get all products for this store
+        pages: {
+          blocks: {} // Get all blocks for each page
+        }
+      }
+    };
+
+    storeUnsubscribe = db.subscribeQuery(storeQuery, (resp) => {
+      hideElement(storeLoadingEl);
+
+      if (resp.error) {
+        console.error('Error loading store:', resp.error);
+        showElement(storeNotFoundEl);
+        return;
+      }
+
+      const stores = resp.data?.storefronts || [];
+      currentStore = stores[0];
+
+      if (!currentStore) {
+        showElement(storeNotFoundEl);
+        return;
+      }
+
+      // Update store info
+      storeNameEl.textContent = currentStore.name;
+
+      // Update store description if available
+      if (currentStore.description) {
+        const descEl = document.getElementById('store-description');
+        if (descEl) {
+          descEl.textContent = currentStore.description;
+        }
+      }
+
+      // Update domain info
+      if (currentStore.customDomain) {
+        storeDomainEl.textContent = `Custom domain: ${currentStore.customDomain}`;
+      } else {
+        storeDomainEl.textContent = `Store ID: ${currentStore.id}`;
+      }
+
+      showElement(storeContentEl);
+
+      // Load home page blocks if available
+      const homePage = currentStore.pages?.find(page => page.isHomePage) ||
+                      currentStore.pages?.find(page => page.id === currentStore.homePageId);
+
+      if (homePage && homePage.blocks && homePage.blocks.length > 0) {
+        renderBlocks(homePage.blocks);
+      } else {
+        // Show default content with first 6 products (client-side limiting)
+        const featuredProducts = (currentStore.products || []).slice(0, 6);
+        renderDefaultContent(featuredProducts);
+      }
+    });
+  }
+
+  // Render blocks for the store page
+  function renderBlocks(blocks) {
+    hideElement(defaultContentEl);
+
+    if (!blocks || blocks.length === 0) {
+      showElement(defaultContentEl);
+      return;
+    }
+
+    blocksRootEl.innerHTML = blocks.map(block => {
+      switch (block.type) {
+        case 'hero':
+          return renderHeroBlock(block);
+        case 'text':
+          return renderTextBlock(block);
+        case 'product-grid':
+          return renderProductGridBlock(block);
+        case 'image':
+          return renderImageBlock(block);
+        default:
+          return `<div class="p-4 bg-gray-100 rounded">Unknown block type: ${block.type}</div>`;
+      }
+    }).join('');
+
+    showElement(blocksRootEl);
+  }
+
+  // Render default content with products
+  function renderDefaultContent(products) {
+    hideElement(blocksRootEl);
+
+    const productsHtml = products.length > 0 ? `
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        ${products.map(product => `
+          <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            ${product.imageUrl ? `
+              <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-48 object-cover">
+            ` : `
+              <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                <span class="text-gray-500">No image</span>
+              </div>
+            `}
+            <div class="p-4">
+              <h3 class="text-lg font-semibold text-gray-900 mb-2">${product.name}</h3>
+              <p class="text-gray-600 text-sm mb-3">${product.description || 'No description available'}</p>
+              <div class="flex items-center justify-between">
+                <span class="text-xl font-bold text-indigo-600">$${product.price}</span>
+                <button class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `
+      <div class="text-center py-12">
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No products yet</h3>
+        <p class="text-gray-600">This store is still setting up their products.</p>
+      </div>
+    `;
+
+    defaultContentEl.innerHTML = `
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Featured Products</h2>
+        ${productsHtml}
+      </div>
+      <div class="text-center">
+        <a href="/store/${storeId}/products/" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700 transition-colors">
+          View All Products
+        </a>
+      </div>
+    `;
+
+    showElement(defaultContentEl);
+  }
+
+  // Block rendering functions
+  function renderHeroBlock(block) {
+    const content = block.content || {};
+    return `
+      <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-16 px-6 rounded-lg mb-8">
+        <div class="max-w-4xl mx-auto text-center">
+          <h1 class="text-4xl font-bold mb-4">${content.title || 'Welcome to our store'}</h1>
+          <p class="text-xl mb-8">${content.subtitle || 'Discover amazing products'}</p>
+          ${content.buttonText ? `
+            <a href="${content.buttonLink || '#'}" class="inline-block bg-white text-indigo-600 px-8 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors">
+              ${content.buttonText}
+            </a>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTextBlock(block) {
+    const content = block.content || {};
+    return `
+      <div class="prose max-w-none mb-8">
+        ${content.title ? `<h2>${content.title}</h2>` : ''}
+        ${content.text ? `<p>${content.text}</p>` : ''}
+      </div>
+    `;
+  }
+
+  function renderImageBlock(block) {
+    const content = block.content || {};
+    if (!content.imageUrl) return '';
+
+    return `
+      <div class="mb-8">
+        <img src="${content.imageUrl}" alt="${content.alt || ''}" class="w-full rounded-lg">
+        ${content.caption ? `<p class="text-center text-gray-600 mt-2">${content.caption}</p>` : ''}
+      </div>
+    `;
+  }
+
+  function renderProductGridBlock(block) {
+    // This would need to fetch products based on block configuration
+    return `
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Featured Products</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Products would be loaded here based on block configuration -->
+        </div>
+      </div>
+    `;
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check auth state
+    async function checkAuthState() {
+      try {
+        const auth = await db.getAuth();
+        currentUser = auth;
+        updateAuthActions();
+      } catch (error) {
+        console.error('Error getting auth state:', error);
+      }
+    }
+
+    checkAuthState();
+    setInterval(checkAuthState, 30000);
+
+    // Load store data
+    loadStore();
+  });
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    if (storeUnsubscribe) storeUnsubscribe();
+  });
+</script>

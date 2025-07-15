@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Stores Query</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #3730a3;
+        }
+        .log {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .store-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: white;
+        }
+        .store-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .store-id {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Stores Query</h1>
+    <p>This page tests querying stores from InstantDB.</p>
+    
+    <button id="query-btn">Query Stores</button>
+    <button id="clear-log-btn">Clear Log</button>
+    
+    <h2>Log</h2>
+    <div id="log" class="log"></div>
+    
+    <h2>Stores</h2>
+    <div id="stores-container"></div>
+
+    <script type="module">
+        import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+        const logEl = document.getElementById('log');
+        const storesContainerEl = document.getElementById('stores-container');
+        const queryBtn = document.getElementById('query-btn');
+        const clearLogBtn = document.getElementById('clear-log-btn');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            if (typeof message === 'object') {
+                logEl.innerHTML += `${timestamp}: ${JSON.stringify(message, null, 2)}\n`;
+            } else {
+                logEl.innerHTML += `${timestamp}: ${message}\n`;
+            }
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        clearLogBtn.addEventListener('click', () => {
+            logEl.innerHTML = '';
+        });
+
+        // Define the schema
+        const schema = i.schema({
+            entities: {
+                storefronts: i.entity({
+                    name: i.string(),
+                    customDomain: i.string().optional(),
+                    homePageId: i.string().optional(),
+                    createdAt: i.date(),
+                }),
+                products: i.entity({
+                    name: i.string(),
+                    description: i.string().optional(),
+                    price: i.number(),
+                    storeId: i.string(),
+                    imageUrl: i.string().optional(),
+                    createdAt: i.date(),
+                }),
+            },
+        });
+
+        log('Initializing InstantDB...');
+        const db = init({
+            appId: 'f7e3fd28-2c57-4c1c-b591-5ecd1929c926',
+            schema
+        });
+        log('InstantDB initialized');
+
+        queryBtn.addEventListener('click', async () => {
+            log('Querying stores...');
+            storesContainerEl.innerHTML = 'Loading...';
+            
+            try {
+                // First try a direct query
+                log('Attempting direct query...');
+                const directResult = await db.query('storefronts').get();
+                log(`Direct query result: ${directResult.length} stores found`);
+                log(directResult);
+                
+                // Then try a subscription
+                let unsubscribe = null;
+                unsubscribe = db.subscribeQuery({ storefronts: {} }, (resp) => {
+                    if (unsubscribe) {
+                        // Only process the first response
+                        unsubscribe();
+                    }
+                    
+                    log('Subscription query response:');
+                    log(resp);
+                    
+                    if (resp.error) {
+                        log(`Error: ${resp.error.message}`);
+                        storesContainerEl.innerHTML = `<div class="error">Error: ${resp.error.message}</div>`;
+                        return;
+                    }
+                    
+                    const stores = resp.data?.storefronts || [];
+                    log(`Found ${stores.length} stores`);
+                    
+                    if (stores.length === 0) {
+                        storesContainerEl.innerHTML = '<div>No stores found</div>';
+                        return;
+                    }
+                    
+                    // Render stores
+                    storesContainerEl.innerHTML = stores.map(store => `
+                        <div class="store-card">
+                            <div class="store-name">${store.name}</div>
+                            <div class="store-id">ID: ${store.id}</div>
+                            <div>Created: ${new Date(store.createdAt).toLocaleString()}</div>
+                        </div>
+                    `).join('');
+                });
+            } catch (error) {
+                log(`Error: ${error.message}`);
+                console.error('Error querying stores:', error);
+                storesContainerEl.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

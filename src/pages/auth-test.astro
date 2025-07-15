@@ -1,0 +1,232 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
+
+export const prerender = true;
+---
+
+<Layout title="Authentication Test - Storefront">
+  <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-white shadow rounded-lg p-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Authentication Test</h1>
+        
+        <!-- Auth Status -->
+        <div id="auth-status" class="mb-6 p-4 rounded-lg">
+          <div id="auth-loading" class="text-gray-600">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 inline-block mr-2"></div>
+            Checking authentication status...
+          </div>
+          
+          <div id="auth-authenticated" class="hidden text-green-600">
+            <svg class="inline-block w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-semibold">Authenticated</span>
+            <div id="user-info" class="mt-2 text-sm text-gray-600"></div>
+          </div>
+          
+          <div id="auth-not-authenticated" class="hidden text-red-600">
+            <svg class="inline-block w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-semibold">Not Authenticated</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex space-x-4 mb-6">
+          <a href="/auth/login" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">
+            Go to Login
+          </a>
+          <button id="sign-out-btn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors hidden">
+            Sign Out
+          </button>
+          <a href="/" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+            Back to Home
+          </a>
+        </div>
+
+        <!-- Data Test -->
+        <div class="border-t pt-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Data Access Test</h2>
+          
+          <div id="data-loading" class="text-gray-600 mb-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 inline-block mr-2"></div>
+            Loading stores data...
+          </div>
+          
+          <div id="data-content" class="hidden">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Available Stores:</h3>
+            <div id="stores-list" class="space-y-2"></div>
+          </div>
+          
+          <div id="data-error" class="hidden text-red-600">
+            <p>Error loading data. Please check the console for details.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script is:inline define:vars={{ appId }}>
+  // Set the app ID as a global variable
+  window.INSTANT_APP_ID = appId;
+</script>
+
+<script type="module" is:inline>
+  import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      blocks: i.entity({
+        type: i.string(),
+        pageId: i.string(),
+        order: i.number(),
+        content: i.json().optional(),
+        style: i.json().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      orders: i.entity({
+        name: i.string(),
+        email: i.string(),
+        cart: i.json(),
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+    },
+  });
+
+  const db = init({
+    appId: window.INSTANT_APP_ID,
+    schema
+  });
+
+  // Store the DB instance globally
+  window.INSTANT_DB_INSTANCE = db;
+
+  let currentUser = null;
+  let authUnsubscribe = null;
+  let storesUnsubscribe = null;
+
+  // DOM elements
+  const authLoadingEl = document.getElementById('auth-loading');
+  const authAuthenticatedEl = document.getElementById('auth-authenticated');
+  const authNotAuthenticatedEl = document.getElementById('auth-not-authenticated');
+  const userInfoEl = document.getElementById('user-info');
+  const signOutBtn = document.getElementById('sign-out-btn');
+  const dataLoadingEl = document.getElementById('data-loading');
+  const dataContentEl = document.getElementById('data-content');
+  const dataErrorEl = document.getElementById('data-error');
+  const storesListEl = document.getElementById('stores-list');
+
+  // Show/hide elements
+  function showElement(el) {
+    el.classList.remove('hidden');
+  }
+
+  function hideElement(el) {
+    el.classList.add('hidden');
+  }
+
+  // Update auth UI
+  function updateAuthUI() {
+    hideElement(authLoadingEl);
+    
+    if (currentUser) {
+      showElement(authAuthenticatedEl);
+      hideElement(authNotAuthenticatedEl);
+      showElement(signOutBtn);
+      userInfoEl.innerHTML = `
+        <strong>Email:</strong> ${currentUser.email}<br>
+        <strong>ID:</strong> ${currentUser.id}<br>
+        <strong>Created:</strong> ${new Date(currentUser.createdAt).toLocaleString()}
+      `;
+    } else {
+      hideElement(authAuthenticatedEl);
+      showElement(authNotAuthenticatedEl);
+      hideElement(signOutBtn);
+    }
+  }
+
+  // Sign out
+  async function signOut() {
+    try {
+      await db.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  }
+
+  // Load stores data
+  function loadStores() {
+    if (storesUnsubscribe) {
+      storesUnsubscribe();
+    }
+
+    storesUnsubscribe = db.subscribeQuery({ storefronts: {} }, (resp) => {
+      hideElement(dataLoadingEl);
+
+      if (resp.error) {
+        console.error('Error loading stores:', resp.error);
+        showElement(dataErrorEl);
+        return;
+      }
+
+      const stores = resp.data?.storefronts || [];
+      
+      if (stores.length === 0) {
+        storesListEl.innerHTML = '<p class="text-gray-600">No stores found. Try adding sample data first.</p>';
+      } else {
+        storesListEl.innerHTML = stores.map(store => `
+          <div class="bg-gray-50 p-3 rounded-md">
+            <div class="font-medium">${store.name}</div>
+            <div class="text-sm text-gray-600">ID: ${store.id}</div>
+            <div class="text-sm text-gray-600">Created: ${new Date(store.createdAt).toLocaleString()}</div>
+            <a href="/store/${store.id}/" class="text-indigo-600 hover:text-indigo-500 text-sm">Visit Store →</a>
+          </div>
+        `).join('');
+      }
+
+      showElement(dataContentEl);
+    });
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    // Subscribe to auth changes
+    authUnsubscribe = db.auth.onChange((auth) => {
+      currentUser = auth.user;
+      updateAuthUI();
+    });
+
+    // Add sign out event listener
+    signOutBtn.addEventListener('click', signOut);
+
+    // Load stores data
+    loadStores();
+  });
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    if (authUnsubscribe) authUnsubscribe();
+    if (storesUnsubscribe) storesUnsubscribe();
+  });
+</script>

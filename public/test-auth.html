@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test InstantDB Auth</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; }
+        .message { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>InstantDB Auth Test</h1>
+        
+        <div>
+            <h3>Test Connection</h3>
+            <button onclick="testConnection()">Test DB Connection</button>
+            <div id="connection-result"></div>
+        </div>
+        
+        <div>
+            <h3>Send Magic Code</h3>
+            <input type="email" id="email" placeholder="Enter your email" value="test@example.com">
+            <button onclick="sendMagicCode()">Send Magic Code</button>
+            <div id="magic-result"></div>
+        </div>
+        
+        <div>
+            <h3>Verify Code</h3>
+            <input type="text" id="code" placeholder="Enter magic code">
+            <button onclick="verifyCode()">Verify Code</button>
+            <div id="verify-result"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { init, i } from '@instantdb/core';
+
+        // Initialize InstantDB
+        const schema = i.schema({
+            entities: {
+                storefronts: i.entity({
+                    name: i.string(),
+                    customDomain: i.string().optional(),
+                    homePageId: i.string().optional(),
+                    createdAt: i.date(),
+                }),
+            },
+        });
+
+        const db = init({
+            appId: 'f7e3fd28-2c57-4c1c-b591-5ecd1929c926',
+            schema
+        });
+
+        console.log('DB initialized:', db);
+        console.log('DB auth:', db.auth);
+
+        window.testConnection = async function() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.innerHTML = '<div class="info">Testing connection...</div>';
+            
+            try {
+                // Test basic query
+                const unsubscribe = db.subscribeQuery({ storefronts: {} }, (resp) => {
+                    unsubscribe();
+                    console.log('Query response:', resp);
+                    
+                    if (resp.error) {
+                        resultDiv.innerHTML = `<div class="error">Connection failed: ${resp.error.message}</div>`;
+                    } else {
+                        resultDiv.innerHTML = `<div class="success">Connection successful! Found ${resp.data?.storefronts?.length || 0} stores</div>`;
+                    }
+                });
+            } catch (error) {
+                console.error('Connection test error:', error);
+                resultDiv.innerHTML = `<div class="error">Connection test failed: ${error.message}</div>`;
+            }
+        };
+
+        window.sendMagicCode = async function() {
+            const email = document.getElementById('email').value;
+            const resultDiv = document.getElementById('magic-result');
+            
+            if (!email) {
+                resultDiv.innerHTML = '<div class="error">Please enter an email</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="info">Sending magic code...</div>';
+            
+            try {
+                console.log('Attempting to send magic code to:', email);
+                await db.auth.sendMagicCode({ email });
+                console.log('Magic code sent successfully');
+                resultDiv.innerHTML = '<div class="success">Magic code sent! Check your email.</div>';
+            } catch (error) {
+                console.error('Magic code error:', error);
+                resultDiv.innerHTML = `<div class="error">Failed to send magic code: ${error.body?.message || error.message}</div>`;
+            }
+        };
+
+        window.verifyCode = async function() {
+            const email = document.getElementById('email').value;
+            const code = document.getElementById('code').value;
+            const resultDiv = document.getElementById('verify-result');
+            
+            if (!email || !code) {
+                resultDiv.innerHTML = '<div class="error">Please enter both email and code</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="info">Verifying code...</div>';
+            
+            try {
+                console.log('Attempting to verify code for:', email);
+                const result = await db.auth.signInWithMagicCode({ email, code });
+                console.log('Verification result:', result);
+                resultDiv.innerHTML = `<div class="success">Login successful! User: ${JSON.stringify(result.user)}</div>`;
+            } catch (error) {
+                console.error('Verification error:', error);
+                resultDiv.innerHTML = `<div class="error">Verification failed: ${error.body?.message || error.message}</div>`;
+            }
+        };
+
+        // Test connection on load
+        window.addEventListener('load', () => {
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>

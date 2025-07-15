@@ -1,0 +1,339 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
+
+export const prerender = true;
+---
+
+<Layout title="Admin - Storefront">
+  <div class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <h1 class="text-xl font-semibold text-gray-900">Admin Panel</h1>
+          </div>
+          <div class="flex items-center space-x-4">
+            <a href="/" class="text-indigo-600 hover:text-indigo-500">← Back to Home</a>
+            <span id="user-email" class="text-gray-700"></span>
+            <button
+              id="sign-out-btn"
+              class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <!-- Auth Check -->
+      <div id="auth-loading" class="text-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading...</p>
+      </div>
+
+      <div id="auth-required" class="text-center py-12 hidden">
+        <div class="text-gray-400 mb-4">
+          <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Authentication Required</h3>
+        <p class="text-gray-600 mb-4">Please sign in to access the admin panel</p>
+        <a href="/auth/login" class="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 transition-colors">
+          Sign In
+        </a>
+      </div>
+
+      <!-- Admin Content -->
+      <div id="admin-content" class="hidden">
+        <!-- Sample Data Management -->
+        <div class="bg-white overflow-hidden shadow rounded-lg mb-6">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Sample Data Management</h3>
+            <p class="text-gray-600 mb-4">
+              Use these tools to create sample stores and products for testing the platform.
+            </p>
+            
+            <div class="flex flex-wrap gap-4 mb-4">
+              <button
+                id="create-sample-data-btn"
+                class="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors"
+              >
+                Create Sample Data
+              </button>
+              <button
+                id="refresh-data-btn"
+                class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Refresh Data
+              </button>
+            </div>
+
+            <div id="sample-data-status" class="text-sm"></div>
+          </div>
+        </div>
+
+        <!-- Data Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Stores</dt>
+                    <dd id="stores-count" class="text-lg font-medium text-gray-900">-</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Products</dt>
+                    <dd id="products-count" class="text-lg font-medium text-gray-900">-</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z" />
+                  </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Blocks</dt>
+                    <dd id="blocks-count" class="text-lg font-medium text-gray-900">-</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Links</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <a
+                href="/dashboard"
+                class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <h4 class="font-medium text-gray-900">Dashboard</h4>
+                <p class="text-sm text-gray-600">Manage your stores</p>
+              </a>
+              <a
+                href="/"
+                class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <h4 class="font-medium text-gray-900">Home Page</h4>
+                <p class="text-sm text-gray-600">View all stores</p>
+              </a>
+              <a
+                href="/auth/login"
+                class="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <h4 class="font-medium text-gray-900">Login Page</h4>
+                <p class="text-sm text-gray-600">Test authentication</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script type="module" is:inline>
+  import { init, i } from '@instantdb/core';
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      blocks: i.entity({
+        type: i.string(),
+        pageId: i.string(),
+        order: i.number(),
+        content: i.json().optional(),
+        style: i.json().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      orders: i.entity({
+        name: i.string(),
+        email: i.string(),
+        cart: i.json(),
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+    },
+  });
+
+  const db = init({
+    appId: '{appId}',
+    schema
+  });
+
+  let currentUser = null;
+  let authUnsubscribe = null;
+
+  // DOM elements
+  const authLoadingEl = document.getElementById('auth-loading');
+  const authRequiredEl = document.getElementById('auth-required');
+  const adminContentEl = document.getElementById('admin-content');
+  const userEmailEl = document.getElementById('user-email');
+  const signOutBtn = document.getElementById('sign-out-btn');
+  const createSampleDataBtn = document.getElementById('create-sample-data-btn');
+  const refreshDataBtn = document.getElementById('refresh-data-btn');
+  const sampleDataStatusEl = document.getElementById('sample-data-status');
+  const storesCountEl = document.getElementById('stores-count');
+  const productsCountEl = document.getElementById('products-count');
+  const blocksCountEl = document.getElementById('blocks-count');
+
+  // Show/hide elements
+  function showElement(el) {
+    el.classList.remove('hidden');
+  }
+
+  function hideElement(el) {
+    el.classList.add('hidden');
+  }
+
+  // Update UI based on auth state
+  function updateAuthUI() {
+    if (currentUser) {
+      hideElement(authLoadingEl);
+      hideElement(authRequiredEl);
+      showElement(adminContentEl);
+      userEmailEl.textContent = currentUser.email;
+      loadDataCounts();
+    } else {
+      hideElement(authLoadingEl);
+      hideElement(adminContentEl);
+      showElement(authRequiredEl);
+    }
+  }
+
+  // Load data counts
+  function loadDataCounts() {
+    // Load stores count
+    db.subscribeQuery({ storefronts: {} }, (resp) => {
+      if (!resp.error && resp.data) {
+        storesCountEl.textContent = resp.data.storefronts?.length || 0;
+      }
+    });
+
+    // Load products count
+    db.subscribeQuery({ products: {} }, (resp) => {
+      if (!resp.error && resp.data) {
+        productsCountEl.textContent = resp.data.products?.length || 0;
+      }
+    });
+
+    // Load blocks count
+    db.subscribeQuery({ blocks: {} }, (resp) => {
+      if (!resp.error && resp.data) {
+        blocksCountEl.textContent = resp.data.blocks?.length || 0;
+      }
+    });
+  }
+
+  // Create sample data
+  async function createSampleData() {
+    createSampleDataBtn.disabled = true;
+    createSampleDataBtn.textContent = 'Creating...';
+    sampleDataStatusEl.innerHTML = '<span class="text-blue-600">Creating sample data...</span>';
+
+    try {
+      // Import and run sample data creation
+      const { createSampleData } = await import('../lib/sampleData.js');
+      const result = await createSampleData();
+
+      if (result.success) {
+        sampleDataStatusEl.innerHTML = '<span class="text-green-600">Sample data created successfully!</span>';
+      } else {
+        sampleDataStatusEl.innerHTML = `<span class="text-red-600">Error: ${result.error}</span>`;
+      }
+    } catch (error) {
+      console.error('Error creating sample data:', error);
+      sampleDataStatusEl.innerHTML = `<span class="text-red-600">Error: ${error.message}</span>`;
+    } finally {
+      createSampleDataBtn.disabled = false;
+      createSampleDataBtn.textContent = 'Create Sample Data';
+    }
+  }
+
+  // Refresh data
+  function refreshData() {
+    loadDataCounts();
+    sampleDataStatusEl.innerHTML = '<span class="text-blue-600">Data refreshed!</span>';
+  }
+
+  // Sign out
+  async function signOut() {
+    try {
+      await db.auth.signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  }
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    // Subscribe to auth changes
+    authUnsubscribe = db.auth.onChange((auth) => {
+      currentUser = auth.user;
+      updateAuthUI();
+    });
+
+    // Button event listeners
+    signOutBtn.addEventListener('click', signOut);
+    createSampleDataBtn.addEventListener('click', createSampleData);
+    refreshDataBtn.addEventListener('click', refreshData);
+  });
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    if (authUnsubscribe) authUnsubscribe();
+  });
+</script>

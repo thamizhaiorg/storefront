@@ -1,0 +1,431 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
+
+export const prerender = true;
+---
+
+<Layout title="Multi-Tenant Storefront Platform" description="Discover amazing stores and products on our multi-tenant e-commerce platform">
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <div class="text-center">
+        <h1 class="text-4xl md:text-6xl font-bold mb-6">
+          Welcome to the Future of E-commerce
+        </h1>
+        <p class="text-xl md:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto">
+          Discover amazing stores and products on our cutting-edge multi-tenant platform
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="#stores" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            Browse Stores
+          </a>
+          <div id="auth-buttons">
+            <!-- Auth buttons will be populated by JavaScript -->
+            <a href="/auth/login" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+              Get Started
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Why Choose Our Platform?</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Built with modern technology for the best shopping experience
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-3">Lightning Fast</h3>
+          <p class="text-gray-600">Built with Astro for optimal performance and speed</p>
+        </div>
+
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-3">User Friendly</h3>
+          <p class="text-gray-600">Intuitive design that makes shopping a pleasure</p>
+        </div>
+
+        <div class="text-center p-6">
+          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold mb-3">Secure</h3>
+          <p class="text-gray-600">Your data and transactions are always protected</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stores Section -->
+  <section id="stores" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-900 mb-4">Featured Stores</h2>
+        <p class="text-lg text-gray-600">Discover amazing stores and their unique products</p>
+      </div>
+
+      <div id="stores-container">
+        <!-- Loading state -->
+        <div id="stores-loading" class="text-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p class="text-gray-600">Loading stores...</p>
+        </div>
+
+        <!-- Stores will be loaded here -->
+        <div id="stores-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden"></div>
+
+        <!-- Empty state -->
+        <div id="stores-empty" class="text-center py-12 hidden">
+          <div class="text-gray-400 mb-4">
+            <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No stores available yet</h3>
+          <p class="text-gray-600">Check back soon for amazing stores and products!</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="stores-error" class="text-center py-12 hidden">
+          <div class="text-red-400 mb-4">
+            <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Unable to load stores</h3>
+          <p class="text-gray-600">Please try refreshing the page</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="bg-indigo-600 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-3xl font-bold mb-4">Ready to Start Shopping?</h2>
+      <p class="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+        Join thousands of satisfied customers and discover your next favorite product
+      </p>
+      <div id="cta-auth-button">
+        <!-- CTA auth button will be populated by JavaScript -->
+        <a
+          href="/auth/login"
+          class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+        >
+          Get Started Today
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script is:inline define:vars={{ appId }}>
+  // Set the app ID as a global variable
+  window.INSTANT_APP_ID = appId;
+</script>
+
+<script type="module" is:inline>
+  // Import InstantDB from CDN
+  import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        logoUrl: i.string().optional(),
+        themeColor: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      pages: i.entity({
+        title: i.string(),
+        slug: i.string(),
+        storeId: i.string(),
+        isHomePage: i.boolean().optional(),
+        createdAt: i.date(),
+      }),
+      blocks: i.entity({
+        type: i.string(), // 'hero', 'text', 'product-grid', 'image', etc.
+        pageId: i.string(),
+        order: i.number(),
+        content: i.json().optional(),
+        style: i.json().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        category: i.string().optional(),
+        inStock: i.boolean().optional(),
+        createdAt: i.date(),
+      }),
+      cartItems: i.entity({
+        productId: i.string(),
+        quantity: i.number(),
+        userId: i.string().optional(),
+        sessionId: i.string().optional(),
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+      orders: i.entity({
+        customerName: i.string(),
+        customerEmail: i.string(),
+        items: i.json(), // Array of {productId, quantity, price}
+        total: i.number(),
+        status: i.string(), // 'pending', 'confirmed', 'shipped', 'delivered'
+        storeId: i.string(),
+        createdAt: i.date(),
+      }),
+    },
+    links: {
+      storePages: {
+        forward: { on: 'storefronts', has: 'many', label: 'pages' },
+        reverse: { on: 'pages', has: 'one', label: 'store' },
+      },
+      storeProducts: {
+        forward: { on: 'storefronts', has: 'many', label: 'products' },
+        reverse: { on: 'products', has: 'one', label: 'store' },
+      },
+      pageBlocks: {
+        forward: { on: 'pages', has: 'many', label: 'blocks' },
+        reverse: { on: 'blocks', has: 'one', label: 'page' },
+      },
+      storeOrders: {
+        forward: { on: 'storefronts', has: 'many', label: 'orders' },
+        reverse: { on: 'orders', has: 'one', label: 'store' },
+      },
+      storeCartItems: {
+        forward: { on: 'storefronts', has: 'many', label: 'cartItems' },
+        reverse: { on: 'cartItems', has: 'one', label: 'store' },
+      },
+    },
+  });
+
+  const db = init({
+    appId: window.INSTANT_APP_ID,
+    schema
+  });
+
+  // Store the DB instance globally for other scripts to use
+  window.INSTANT_DB_INSTANCE = db;
+
+  // Auth state management
+  let currentUser = null;
+
+  // Update auth buttons based on user state
+  function updateAuthButtons() {
+    console.log('Updating auth buttons, current user:', currentUser);
+
+    const authButtonsEl = document.getElementById('auth-buttons');
+    const ctaAuthButtonEl = document.getElementById('cta-auth-button');
+
+    if (!authButtonsEl || !ctaAuthButtonEl) {
+      console.error('Auth button elements not found!');
+      return;
+    }
+
+    if (currentUser) {
+      // User is logged in
+      console.log('User is logged in, updating UI for:', currentUser.email);
+
+      authButtonsEl.innerHTML = `
+        <div class="flex items-center gap-4">
+          <span class="text-white">Welcome, ${currentUser.email}</span>
+          <button id="sign-out-btn" class="border-2 border-white text-white px-6 py-2 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+            Sign Out
+          </button>
+        </div>
+      `;
+
+      ctaAuthButtonEl.innerHTML = `
+        <button id="sign-out-cta-btn" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          Sign Out
+        </button>
+      `;
+
+      // Add sign out event listeners
+      setTimeout(() => {
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const signOutCtaBtn = document.getElementById('sign-out-cta-btn');
+
+        if (signOutBtn) {
+          signOutBtn.addEventListener('click', signOut);
+        }
+
+        if (signOutCtaBtn) {
+          signOutCtaBtn.addEventListener('click', signOut);
+        }
+      }, 0);
+    } else {
+      // User is not logged in
+      console.log('User is not logged in, showing login buttons');
+
+      authButtonsEl.innerHTML = `
+        <a href="/auth/login" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+          Get Started
+        </a>
+      `;
+
+      ctaAuthButtonEl.innerHTML = `
+        <a href="/auth/login" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          Get Started Today
+        </a>
+      `;
+    }
+  }
+
+  // Sign out function
+  async function signOut(event) {
+    event.preventDefault();
+    console.log('Sign out clicked');
+
+    try {
+      console.log('Attempting to sign out...');
+      await db.auth.signOut();
+      console.log('Sign out successful');
+
+      // Force update UI
+      currentUser = null;
+      updateAuthButtons();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  }
+
+  // Load stores and auth on page load
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing...');
+
+    const loadingEl = document.getElementById('stores-loading');
+    const gridEl = document.getElementById('stores-grid');
+    const emptyEl = document.getElementById('stores-empty');
+    const errorEl = document.getElementById('stores-error');
+
+    // Check current auth state
+    console.log('Checking current auth state...');
+    async function checkAuthState() {
+      try {
+        const auth = await db.getAuth();
+        console.log('Auth state retrieved:', auth);
+        currentUser = auth;
+        updateAuthButtons();
+      } catch (error) {
+        console.error('Error getting auth state:', error);
+      }
+    }
+
+    // Initial auth check
+    checkAuthState();
+
+    // Periodic auth check (every 30 seconds)
+    setInterval(checkAuthState, 30000);
+
+    // Load stores data
+    console.log('Setting up stores loading...');
+    try {
+      // Use simple InstaQL query - limit and order only work on top-level
+      console.log('Setting up stores subscription...');
+      const storesQuery = {
+        storefronts: {
+          $: {
+            order: { serverCreatedAt: 'desc' },
+            limit: 12 // Limit to 12 featured stores
+          },
+          products: {} // Get all products for each store (no nested limit allowed)
+        }
+      };
+
+      db.subscribeQuery(storesQuery, (resp) => {
+        console.log('Stores subscription response:', resp);
+
+        // Hide loading state
+        loadingEl.classList.add('hidden');
+
+        if (resp.error) {
+          console.error('Error in stores subscription:', resp.error);
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const stores = resp.data?.storefronts || [];
+        console.log('Found stores:', stores);
+
+        if (stores.length === 0) {
+          console.log('No stores found, showing empty state');
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        // Hide empty and error states
+        emptyEl.classList.add('hidden');
+        errorEl.classList.add('hidden');
+
+        // Render stores
+        console.log('Rendering stores...');
+        gridEl.innerHTML = stores.map(store => {
+          const productCount = store.products?.length || 0;
+          const hasProducts = productCount > 0;
+
+          return `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <div class="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+                ${store.logoUrl ? `<img src="${store.logoUrl}" alt="${store.name}" class="absolute inset-0 w-full h-full object-cover">` : ''}
+              </div>
+              <div class="p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">${store.name}</h3>
+                <p class="text-gray-600 mb-4">${store.description || 'Discover amazing products and deals'}</p>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-500">${hasProducts ? `${productCount}+ products` : 'New store'}</span>
+                  <a
+                    href="/store/${store.id}/"
+                    class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 transition-colors"
+                  >
+                    Visit Store
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        gridEl.classList.remove('hidden');
+        console.log('Stores rendered successfully');
+      });
+    } catch (error) {
+      console.error('Error initializing stores loading:', error);
+      loadingEl.classList.add('hidden');
+      errorEl.classList.remove('hidden');
+    }
+  });
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', () => {
+    // No cleanup needed for getAuth approach
+  });
+</script>

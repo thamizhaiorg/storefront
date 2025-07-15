@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Stores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .store-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        .store-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        .store-id {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+        .store-link {
+            display: inline-block;
+            background: #4f46e5;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .store-link:hover {
+            background: #3730a3;
+        }
+        .log {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Store Debug Page</h1>
+    <p>This page shows the current stores in the database and tests the store links.</p>
+    
+    <div id="status" class="status loading">Loading stores...</div>
+    
+    <div id="stores-container"></div>
+    
+    <h2>Debug Log</h2>
+    <div id="log" class="log"></div>
+
+    <script type="module">
+        import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+        const storesContainerEl = document.getElementById('stores-container');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            if (typeof message === 'object') {
+                logEl.innerHTML += `${timestamp}: ${JSON.stringify(message, null, 2)}\n`;
+            } else {
+                logEl.innerHTML += `${timestamp}: ${message}\n`;
+            }
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // Define the schema
+        const schema = i.schema({
+            entities: {
+                storefronts: i.entity({
+                    name: i.string(),
+                    customDomain: i.string().optional(),
+                    homePageId: i.string().optional(),
+                    createdAt: i.date(),
+                }),
+                products: i.entity({
+                    name: i.string(),
+                    description: i.string().optional(),
+                    price: i.number(),
+                    storeId: i.string(),
+                    imageUrl: i.string().optional(),
+                    createdAt: i.date(),
+                }),
+            },
+        });
+
+        log('Initializing InstantDB...');
+        const db = init({
+            appId: 'f7e3fd28-2c57-4c1c-b591-5ecd1929c926',
+            schema
+        });
+        log('InstantDB initialized');
+
+        // Load stores
+        log('Setting up stores subscription...');
+        db.subscribeQuery({ storefronts: {} }, (resp) => {
+            log('Stores subscription response:');
+            log(resp);
+            
+            if (resp.error) {
+                log(`Error: ${resp.error.message}`);
+                statusEl.className = 'status error';
+                statusEl.textContent = `Error: ${resp.error.message}`;
+                return;
+            }
+            
+            const stores = resp.data?.storefronts || [];
+            log(`Found ${stores.length} stores`);
+            
+            if (stores.length === 0) {
+                statusEl.className = 'status error';
+                statusEl.textContent = 'No stores found in database';
+                storesContainerEl.innerHTML = '<p>No stores found. Try adding sample data first.</p>';
+                return;
+            }
+            
+            statusEl.className = 'status success';
+            statusEl.textContent = `Successfully loaded ${stores.length} stores`;
+            
+            // Render stores
+            storesContainerEl.innerHTML = stores.map(store => `
+                <div class="store-card">
+                    <div class="store-name">${store.name}</div>
+                    <div class="store-id">ID: ${store.id}</div>
+                    <div>Created: ${new Date(store.createdAt).toLocaleString()}</div>
+                    ${store.customDomain ? `<div>Custom Domain: ${store.customDomain}</div>` : ''}
+                    ${store.homePageId ? `<div>Home Page ID: ${store.homePageId}</div>` : ''}
+                    <a href="/store/${store.id}/" class="store-link" target="_blank">Visit Store Page</a>
+                    <a href="/store/${store.id}/products/" class="store-link" target="_blank">View Products</a>
+                </div>
+            `).join('');
+        });
+    </script>
+</body>
+</html>

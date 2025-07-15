@@ -1,0 +1,208 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { db } from '../../../../../lib/instantdb.js';
+import { generateProductSchema, generateSEOTags, generateMetaDescription } from '../../../../../lib/seo.js';
+
+const { storeId, productId } = Astro.params;
+
+// Set to false to enable server-side rendering for dynamic routes
+export const prerender = false;
+
+let product = null;
+let store = null;
+
+try {
+  // Fetch product
+  const productResult = await new Promise((resolve, reject) => {
+    const unsubscribe = db.subscribeQuery({
+      products: {
+        $: { where: { id: productId } }
+      }
+    }, (resp) => {
+      unsubscribe();
+      if (resp.error) {
+        reject(resp.error);
+      } else {
+        resolve(resp);
+      }
+    });
+  });
+  const products = productResult.data?.products || [];
+  product = products[0];
+
+  // Fetch store info
+  if (product) {
+    const storeResult = await new Promise((resolve, reject) => {
+      const unsubscribe = db.subscribeQuery({
+        storefronts: {
+          $: { where: { id: storeId } }
+        }
+      }, (resp) => {
+        unsubscribe();
+        if (resp.error) {
+          reject(resp.error);
+        } else {
+          resolve(resp);
+        }
+      });
+    });
+    const stores = storeResult.data?.storefronts || [];
+    store = stores[0];
+  }
+} catch (e) {
+  console.error('Error fetching product:', e);
+}
+
+if (!product || !store) {
+  return Astro.redirect('/404');
+}
+
+// Generate SEO data
+const title = `${product.name} - ${store.name}`;
+const description = generateMetaDescription(product, store);
+const schema = generateProductSchema(product, store);
+const breadcrumbs = [
+  { name: 'Home', url: '/' },
+  { name: store.name, url: `/store/${storeId}` },
+  { name: 'Products', url: `/store/${storeId}/products` },
+  { name: product.name, url: `/store/${storeId}/products/${productId}` }
+];
+---
+<Layout title={title} description={description} image={product.imageUrl}>
+  <!-- Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(schema)}></script>
+
+  <div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Breadcrumbs -->
+      <nav class="mb-8">
+        <ol class="flex items-center space-x-2 text-sm">
+          {breadcrumbs.map((crumb, index) => (
+            <li class="flex items-center">
+              {index > 0 && (
+                <svg class="w-4 h-4 text-gray-400 mx-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              )}
+              {index === breadcrumbs.length - 1 ? (
+                <span class="text-gray-500">{crumb.name}</span>
+              ) : (
+                <a href={crumb.url} class="text-indigo-600 hover:text-indigo-500">{crumb.name}</a>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <!-- Product Details -->
+      <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+          <!-- Product Image -->
+          <div class="aspect-w-1 aspect-h-1">
+            <img
+              src={product.imageUrl || '/placeholder-product.jpg'}
+              alt={product.name}
+              class="w-full h-96 object-cover object-center rounded-lg"
+            />
+          </div>
+
+          <!-- Product Info -->
+          <div class="space-y-6">
+            <div>
+              <h1 class="text-3xl font-bold text-gray-900">{product.name}</h1>
+              <p class="text-2xl font-bold text-indigo-600 mt-2">${product.price}</p>
+            </div>
+
+            {product.description && (
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Description</h3>
+                <p class="text-gray-600">{product.description}</p>
+              </div>
+            )}
+
+            <!-- Add to Cart -->
+            <div class="space-y-4">
+              <div class="flex items-center space-x-4">
+                <label for="quantity" class="text-sm font-medium text-gray-700">Quantity:</label>
+                <select
+                  id="quantity"
+                  class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  {Array.from({length: 10}, (_, i) => i + 1).map(num => (
+                    <option value={num}>{num}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                id="add-to-cart"
+                class="w-full bg-indigo-600 text-white py-3 px-6 rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                Add to Cart
+              </button>
+
+              <div class="flex space-x-4">
+                <a
+                  href={`/store/${storeId}/products`}
+                  class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md font-medium text-center hover:bg-gray-300 transition-colors"
+                >
+                  Continue Shopping
+                </a>
+                <a
+                  href={`/store/${storeId}/cart`}
+                  class="flex-1 bg-gray-800 text-white py-2 px-4 rounded-md font-medium text-center hover:bg-gray-900 transition-colors"
+                >
+                  View Cart
+                </a>
+              </div>
+            </div>
+
+            <!-- Store Info -->
+            <div class="border-t border-gray-200 pt-6">
+              <h3 class="text-lg font-medium text-gray-900 mb-2">Sold by</h3>
+              <a
+                href={`/store/${storeId}`}
+                class="flex items-center space-x-3 text-indigo-600 hover:text-indigo-500"
+              >
+                <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <span class="font-medium">{store.name}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script type="module" is:inline>
+  const productId = `{productId}`;
+  const storeId = `{storeId}`;
+
+  document.getElementById('add-to-cart').addEventListener('click', () => {
+    const quantity = parseInt(document.getElementById('quantity').value);
+    let cart = JSON.parse(localStorage.getItem('cart') || '{}');
+    cart[productId] = (cart[productId] || 0) + quantity;
+    localStorage.setItem('cart', JSON.stringify(cart));
+
+    // Dispatch custom event for cart updates
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+    // Show success message
+    const button = document.getElementById('add-to-cart');
+    const originalText = button.textContent;
+    button.textContent = 'Added to Cart!';
+    button.classList.add('bg-green-600', 'hover:bg-green-700');
+    button.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+
+    setTimeout(() => {
+      button.textContent = originalText;
+      button.classList.remove('bg-green-600', 'hover:bg-green-700');
+      button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+    }, 2000);
+  });
+</script>
