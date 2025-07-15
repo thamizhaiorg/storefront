@@ -7,81 +7,11 @@ export const prerender = true;
 ---
 
 <Layout title="Modern Storefront Platform" description="Discover amazing stores and products on our modern, minimal e-commerce platform">
-  <!-- Modern Flat Hero Section -->
-  <section class="bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-      <div class="text-center">
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-medium text-surface-900 mb-6 text-balance">
-          Modern E-commerce
-          <span class="text-brand-500">Made Simple</span>
-        </h1>
-        <p class="text-lg md:text-xl text-surface-600 mb-10 max-w-2xl mx-auto text-balance">
-          Discover amazing stores and products on our clean, modern platform designed for the future of shopping.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="#stores" class="btn-primary px-8 py-3 text-lg">
-            Browse Stores
-          </a>
-          <div id="auth-buttons">
-            <!-- Auth buttons will be populated by JavaScript -->
-            <a href="/auth/login" class="btn-outline px-8 py-3 text-lg">
-              Get Started
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Modern Features Section -->
-  <section class="py-20 bg-surface-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <h2 class="text-3xl md:text-4xl font-display font-medium text-surface-900 mb-4">Why Choose Our Platform?</h2>
-        <p class="text-lg text-surface-600 max-w-2xl mx-auto">
-          Built with modern technology for the best shopping experience
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="text-center p-8 bg-white rounded-lg border border-surface-200">
-          <div class="w-16 h-16 bg-brand-100 rounded-lg flex items-center justify-center mx-auto mb-6">
-            <svg class="w-8 h-8 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-medium text-surface-900 mb-3">Lightning Fast</h3>
-          <p class="text-surface-600">Built with Astro for optimal performance and speed</p>
-        </div>
-
-        <div class="text-center p-8 bg-white rounded-lg border border-surface-200">
-          <div class="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mx-auto mb-6">
-            <svg class="w-8 h-8 text-accent-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-medium text-surface-900 mb-3">User Friendly</h3>
-          <p class="text-surface-600">Intuitive design that makes shopping a pleasure</p>
-        </div>
-
-        <div class="text-center p-8 bg-white rounded-lg border border-surface-200">
-          <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-6">
-            <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-medium text-surface-900 mb-3">Secure</h3>
-          <p class="text-surface-600">Your data and transactions are always protected</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- Modern Stores Section -->
-  <section id="stores" class="py-20 bg-white">
+  <section id="stores" class="py-12 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <h2 class="text-3xl md:text-4xl font-display font-medium text-surface-900 mb-4">Featured Stores</h2>
+      <div class="text-center mb-12">
+        <h1 class="text-3xl md:text-4xl font-display font-medium text-surface-900 mb-4">Browse Stores</h1>
         <p class="text-lg text-surface-600">Discover amazing stores and their unique products</p>
       </div>
 
@@ -116,25 +46,6 @@ export const prerender = true;
           <h3 class="text-lg font-medium text-surface-900 mb-2">Unable to load stores</h3>
           <p class="text-surface-600">Please try refreshing the page</p>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Modern CTA Section -->
-  <section class="bg-brand-500 text-white py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h2 class="text-3xl md:text-4xl font-display font-medium mb-4">Ready to Start Shopping?</h2>
-      <p class="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-        Join thousands of satisfied customers and discover your next favorite product
-      </p>
-      <div id="cta-auth-button">
-        <!-- CTA auth button will be populated by JavaScript -->
-        <a
-          href="/auth/login"
-          class="bg-white text-brand-600 px-8 py-3 rounded-md font-medium hover:bg-surface-100 transition-colors inline-block text-lg"
-        >
-          Get Started Today
-        </a>
       </div>
     </div>
   </section>
@@ -242,82 +153,10 @@ export const prerender = true;
   // Update auth buttons based on user state
   function updateAuthButtons() {
     console.log('Updating auth buttons, current user:', currentUser);
-
-    const authButtonsEl = document.getElementById('auth-buttons');
-    const ctaAuthButtonEl = document.getElementById('cta-auth-button');
-
-    if (!authButtonsEl || !ctaAuthButtonEl) {
-      console.error('Auth button elements not found!');
-      return;
-    }
-
-    if (currentUser) {
-      // User is logged in
-      console.log('User is logged in, updating UI for:', currentUser.email);
-
-      authButtonsEl.innerHTML = `
-        <div class="flex items-center gap-3">
-          <span class="text-white/90 text-sm">Hi, ${currentUser.email.split('@')[0]}</span>
-          <button id="sign-out-btn" class="text-white hover:text-white/80 underline text-sm">
-            Sign Out
-          </button>
-        </div>
-      `;
-
-      ctaAuthButtonEl.innerHTML = `
-        <button id="sign-out-cta-btn" class="bg-white text-brand-600 px-8 py-3 rounded-md font-medium hover:bg-surface-100 transition-colors inline-block text-lg">
-          Sign Out
-        </button>
-      `;
-
-      // Add sign out event listeners
-      setTimeout(() => {
-        const signOutBtn = document.getElementById('sign-out-btn');
-        const signOutCtaBtn = document.getElementById('sign-out-cta-btn');
-
-        if (signOutBtn) {
-          signOutBtn.addEventListener('click', signOut);
-        }
-
-        if (signOutCtaBtn) {
-          signOutCtaBtn.addEventListener('click', signOut);
-        }
-      }, 0);
-    } else {
-      // User is not logged in
-      console.log('User is not logged in, showing login buttons');
-
-      authButtonsEl.innerHTML = `
-        <a href="/auth/login" class="text-white hover:text-white/80 underline">
-          Login
-        </a>
-      `;
-
-      ctaAuthButtonEl.innerHTML = `
-        <a href="/auth/login" class="bg-white text-brand-600 px-8 py-3 rounded-md font-medium hover:bg-surface-100 transition-colors inline-block text-lg">
-          Get Started Today
-        </a>
-      `;
-    }
+    // Auth buttons are now handled by the layout header
   }
 
-  // Sign out function
-  async function signOut(event) {
-    event.preventDefault();
-    console.log('Sign out clicked');
 
-    try {
-      console.log('Attempting to sign out...');
-      await db.auth.signOut();
-      console.log('Sign out successful');
-
-      // Force update UI
-      currentUser = null;
-      updateAuthButtons();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  }
 
   // Load stores and auth on page load
   document.addEventListener('DOMContentLoaded', () => {
@@ -402,10 +241,10 @@ export const prerender = true;
                 <h3 class="text-xl font-medium text-surface-900 mb-2">${store.name}</h3>
                 <p class="text-surface-600 mb-4">${store.description || 'Discover amazing products and deals'}</p>
                 <div class="flex items-center justify-between">
-                  <span class="text-sm text-surface-500">${hasProducts ? `${productCount}+ products` : 'New store'}</span>
+                  <span class="text-sm text-surface-500">${hasProducts ? `${productCount} products` : 'New store'}</span>
                   <a
                     href="/store/${store.id}/"
-                    class="btn-primary px-4 py-2"
+                    class="btn-primary px-6 py-2 font-medium"
                   >
                     Visit Store
                   </a>

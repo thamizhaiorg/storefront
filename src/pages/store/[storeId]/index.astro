@@ -238,22 +238,24 @@ export const prerender = false;
   }
 
   // Function to load products directly by storeId
-  async function loadProductsDirectly() {
-    try {
-      const productsQuery = {
-        products: {
-          $: {
-            where: { storeId: storeId }
-          }
+  function loadProductsDirectly() {
+    const currentStoreId = window.currentStoreId || storeId;
+    const productsQuery = {
+      products: {
+        $: {
+          where: { storeId: currentStoreId }
         }
-      };
+      }
+    };
 
-      console.log('Querying products directly for storeId:', storeId);
-      const resp = await db.query(productsQuery);
+    console.log('Querying products directly for storeId:', currentStoreId);
+
+    db.subscribeQuery(productsQuery, (resp) => {
       console.log('Direct products query response:', resp);
 
       if (resp.error) {
         console.error('Error loading products:', resp.error);
+        renderDefaultContent([]);
         return;
       }
 
@@ -263,38 +265,64 @@ export const prerender = false;
       if (products.length > 0) {
         renderDefaultContent(products);
       } else {
-        console.log('No products found directly either.');
-        // Show empty state
-        renderDefaultContent([]);
+        console.log('No products found directly either. Trying to get all products...');
+        // Try to get all products as a test
+        const allProductsQuery = { products: {} };
+
+        db.subscribeQuery(allProductsQuery, (allProductsResp) => {
+          console.log('All products query response:', allProductsResp);
+
+          const allProducts = allProductsResp.data?.products || [];
+          console.log('All products found:', allProducts);
+
+          if (allProducts.length > 0) {
+            // Filter products for this store manually
+            const storeProducts = allProducts.filter(p => p.storeId === currentStoreId);
+            console.log('Filtered products for store:', storeProducts);
+
+            if (storeProducts.length > 0) {
+              renderDefaultContent(storeProducts);
+            } else {
+              renderDefaultContent([]);
+            }
+          } else {
+            renderDefaultContent([]);
+          }
+        });
       }
-    } catch (error) {
-      console.error('Error in loadProductsDirectly:', error);
-      renderDefaultContent([]);
-    }
+    });
   }
 
   // Load store data with products and pages using proper InstaQL
-  async function loadStore() {
-    try {
-      // Use query once method to get store data with products
-      const storeQuery = {
-        storefronts: {
-          $: {
-            where: { id: storeId }
-          },
-          products: {}, // Get all products for this store via the link relationship
-          pages: {
-            blocks: {} // Get all blocks for each page
-          }
+  function loadStore() {
+    // Use the current store ID from the window object
+    const currentStoreId = window.currentStoreId || storeId;
+    console.log('Loading store with currentStoreId:', currentStoreId);
+
+    // Use subscribeQuery method to get store data with products
+    const storeQuery = {
+      storefronts: {
+        $: {
+          where: { id: currentStoreId }
+        },
+        products: {}, // Get all products for this store via the link relationship
+        pages: {
+          blocks: {} // Get all blocks for each page
         }
-      };
+      }
+    };
 
-      console.log('Querying store with ID:', storeId);
-      const resp = await db.query(storeQuery);
+    console.log('Querying store with ID:', currentStoreId);
 
+    if (storeUnsubscribe) {
+      storeUnsubscribe();
+    }
+
+    storeUnsubscribe = db.subscribeQuery(storeQuery, (resp) => {
       hideElement(storeLoadingEl);
 
       console.log('Query response:', resp);
+      console.log('Raw response data:', resp.data);
 
       if (resp.error) {
         console.error('Error loading store:', resp.error);
@@ -303,9 +331,11 @@ export const prerender = false;
       }
 
       const stores = resp.data?.storefronts || [];
+      console.log('Found stores:', stores);
       currentStore = stores[0];
 
       if (!currentStore) {
+        console.log('No store found with ID:', currentStoreId);
         showElement(storeNotFoundEl);
         return;
       }
@@ -350,11 +380,7 @@ export const prerender = false;
           renderDefaultContent(allProducts);
         }
       }
-    } catch (error) {
-      console.error('Error loading store data:', error);
-      hideElement(storeLoadingEl);
-      showElement(storeNotFoundEl);
-    }
+    });
   }
 
   // Render blocks for the store page
@@ -539,7 +565,9 @@ export const prerender = false;
 
     // Get the storeId from the URL if not available from Astro.params
     const urlStoreId = storeId || window.location.pathname.split('/').filter(Boolean)[1];
-    console.log('Loading store with ID:', urlStoreId);
+    console.log('StoreId from Astro.params:', storeId);
+    console.log('StoreId from URL:', urlStoreId);
+    console.log('Final storeId to use:', urlStoreId);
 
     if (!urlStoreId) {
       console.error('No store ID found in URL');
@@ -547,6 +575,9 @@ export const prerender = false;
       showElement(storeNotFoundEl);
       return;
     }
+
+    // Update the global storeId variable
+    window.currentStoreId = urlStoreId;
 
     // Load store data
     loadStore();
