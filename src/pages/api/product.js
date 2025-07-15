@@ -10,20 +10,15 @@ export const GET = asyncHandler(async ({ url }) => {
     throw new ValidationError('Product ID is required');
   }
 
-  const result = await new Promise((resolve, reject) => {
-    const unsubscribe = db.subscribeQuery({
-      products: {
-        $: { where: { id: productId } }
-      }
-    }, (resp) => {
-      unsubscribe();
-      if (resp.error) {
-        reject(resp.error);
-      } else {
-        resolve(resp);
-      }
-    });
+  const result = await db.queryOnce({
+    products: {
+      $: { where: { id: productId } }
+    }
   });
+
+  if (result.error) {
+    throw new Error(result.error.message || 'Failed to fetch product');
+  }
 
   const products = result.data?.products || [];
   const product = products[0];

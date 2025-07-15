@@ -1,6 +1,8 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
+
 const { storeId } = Astro.params;
+const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
 
 // Set to false to enable server-side rendering for dynamic routes
 export const prerender = false;
@@ -148,8 +150,47 @@ export const prerender = false;
   </div>
 </Layout>
 
+<script is:inline define:vars={{ appId, storeId }}>
+  // Set global variables
+  window.INSTANT_APP_ID = appId;
+  window.STORE_ID = storeId;
+</script>
+
 <script type="module" is:inline>
+  // Import InstantDB
+  import { init, i } from 'https://cdn.skypack.dev/@instantdb/core';
+
   const storeId = `{storeId}`;
+
+  // Initialize InstantDB client-side
+  const schema = i.schema({
+    entities: {
+      storefronts: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        customDomain: i.string().optional(),
+        homePageId: i.string().optional(),
+        logoUrl: i.string().optional(),
+        themeColor: i.string().optional(),
+        createdAt: i.date(),
+      }),
+      products: i.entity({
+        name: i.string(),
+        description: i.string().optional(),
+        price: i.number(),
+        storeId: i.string(),
+        imageUrl: i.string().optional(),
+        category: i.string().optional(),
+        inStock: i.boolean().optional(),
+        createdAt: i.date(),
+      }),
+    },
+  });
+
+  const db = init({
+    appId: window.INSTANT_APP_ID,
+    schema
+  });
 
   // State
   let cart = {};
@@ -166,16 +207,28 @@ export const prerender = false;
   const submitBtn = document.getElementById('submit-btn');
   const messageEl = document.getElementById('message');
 
-  // Fetch product details
+  // Fetch product details using queryOnce
   async function fetchProduct(productId) {
     if (products[productId]) {
       return products[productId];
     }
 
     try {
-      const response = await fetch(`/api/product?productId=${productId}`);
-      if (response.ok) {
-        const product = await response.json();
+      const result = await db.queryOnce({
+        products: {
+          $: { where: { id: productId } }
+        }
+      });
+
+      if (result.error) {
+        console.error('Error fetching product:', result.error);
+        return null;
+      }
+
+      const productList = result.data?.products || [];
+      const product = productList[0];
+
+      if (product) {
         products[productId] = product;
         return product;
       }

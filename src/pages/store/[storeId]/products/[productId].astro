@@ -12,40 +12,32 @@ let product = null;
 let store = null;
 
 try {
-  // Fetch product
-  const productResult = await new Promise((resolve, reject) => {
-    const unsubscribe = db.subscribeQuery({
-      products: {
-        $: { where: { id: productId } }
-      }
-    }, (resp) => {
-      unsubscribe();
-      if (resp.error) {
-        reject(resp.error);
-      } else {
-        resolve(resp);
-      }
-    });
+  // Fetch product using queryOnce
+  const productResult = await db.queryOnce({
+    products: {
+      $: { where: { id: productId } }
+    }
   });
+
+  if (productResult.error) {
+    throw productResult.error;
+  }
+
   const products = productResult.data?.products || [];
   product = products[0];
 
-  // Fetch store info
+  // Fetch store info using queryOnce
   if (product) {
-    const storeResult = await new Promise((resolve, reject) => {
-      const unsubscribe = db.subscribeQuery({
-        storefronts: {
-          $: { where: { id: storeId } }
-        }
-      }, (resp) => {
-        unsubscribe();
-        if (resp.error) {
-          reject(resp.error);
-        } else {
-          resolve(resp);
-        }
-      });
+    const storeResult = await db.queryOnce({
+      storefronts: {
+        $: { where: { id: storeId } }
+      }
     });
+
+    if (storeResult.error) {
+      throw storeResult.error;
+    }
+
     const stores = storeResult.data?.storefronts || [];
     store = stores[0];
   }

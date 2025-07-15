@@ -160,8 +160,7 @@ export const prerender = false;
 
   let currentUser = null;
   let currentStore = null;
-  let storeUnsubscribe = null;
-  let productsUnsubscribe = null;
+  let sessionId = null;
 
   // DOM elements
   const productsLoadingEl = document.getElementById('products-loading');
@@ -210,17 +209,15 @@ export const prerender = false;
     }
   }
 
-  // Load store info
-  function loadStore() {
-    if (storeUnsubscribe) {
-      storeUnsubscribe();
-    }
+  // Load store info using queryOnce
+  async function loadStore() {
+    try {
+      const resp = await db.queryOnce({
+        storefronts: {
+          $: { where: { id: storeId } }
+        }
+      });
 
-    storeUnsubscribe = db.subscribeQuery({
-      storefronts: {
-        $: { where: { id: storeId } }
-      }
-    }, (resp) => {
       if (resp.error) {
         console.error('Error loading store:', resp.error);
         storeInfoEl.textContent = 'Error loading store information';
@@ -235,26 +232,31 @@ export const prerender = false;
       } else {
         storeInfoEl.textContent = 'Store not found';
       }
-    });
+    } catch (error) {
+      console.error('Error loading store:', error);
+      storeInfoEl.textContent = 'Error loading store information';
+    }
   }
 
-  // Load products using proper InstaQL
-  function loadProducts() {
-    if (productsUnsubscribe) {
-      productsUnsubscribe();
-    }
+  // Load products using queryOnce
+  async function loadProducts() {
+    try {
+      showElement(productsLoadingEl);
+      hideElement(productsErrorEl);
+      hideElement(productsEmptyEl);
+      hideElement(productsGridEl);
 
-    // Use proper InstaQL query with filtering and ordering
-    const productsQuery = {
-      products: {
-        $: {
-          where: { storeId },
-          order: { serverCreatedAt: 'desc' }
+      // Use proper InstaQL query with filtering and ordering
+      const productsQuery = {
+        products: {
+          $: {
+            where: { storeId },
+            order: { serverCreatedAt: 'desc' }
+          }
         }
-      }
-    };
+      };
 
-    productsUnsubscribe = db.subscribeQuery(productsQuery, (resp) => {
+      const resp = await db.queryOnce(productsQuery);
       hideElement(productsLoadingEl);
 
       if (resp.error) {
@@ -326,7 +328,11 @@ export const prerender = false;
       `).join('');
 
       showElement(productsGridEl);
-    });
+    } catch (error) {
+      console.error('Error loading products:', error);
+      hideElement(productsLoadingEl);
+      showElement(productsErrorEl);
+    }
   }
 
   // Cart functionality - make it globally available
@@ -357,7 +363,6 @@ export const prerender = false;
   }
 
   // Initialize
-  let sessionId = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     // Check auth state
@@ -377,11 +382,5 @@ export const prerender = false;
     // Load store and products
     loadStore();
     loadProducts();
-  });
-
-  // Clean up on page unload
-  window.addEventListener('beforeunload', () => {
-    if (storeUnsubscribe) storeUnsubscribe();
-    if (productsUnsubscribe) productsUnsubscribe();
   });
 </script>
