@@ -6,24 +6,25 @@ const appId = import.meta.env.PUBLIC_INSTANT_APP_ID;
 export const prerender = true;
 ---
 
-<Layout title="Multi-Tenant Storefront Platform" description="Discover amazing stores and products on our multi-tenant e-commerce platform">
-  <!-- Hero Section -->
-  <section class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+<Layout title="Modern Storefront Platform" description="Discover amazing stores and products on our modern, minimal e-commerce platform">
+  <!-- Modern Flat Hero Section -->
+  <section class="bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
       <div class="text-center">
-        <h1 class="text-4xl md:text-6xl font-bold mb-6">
-          Welcome to the Future of E-commerce
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-medium text-surface-900 mb-6 text-balance">
+          Modern E-commerce
+          <span class="text-brand-500">Made Simple</span>
         </h1>
-        <p class="text-xl md:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto">
-          Discover amazing stores and products on our cutting-edge multi-tenant platform
+        <p class="text-lg md:text-xl text-surface-600 mb-10 max-w-2xl mx-auto text-balance">
+          Discover amazing stores and products on our clean, modern platform designed for the future of shopping.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="#stores" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+          <a href="#stores" class="btn-primary px-8 py-3 text-lg">
             Browse Stores
           </a>
           <div id="auth-buttons">
             <!-- Auth buttons will be populated by JavaScript -->
-            <a href="/auth/login" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+            <a href="/auth/login" class="btn-outline px-8 py-3 text-lg">
               Get Started
             </a>
           </div>
@@ -32,63 +33,63 @@ export const prerender = true;
     </div>
   </section>
 
-  <!-- Features Section -->
-  <section class="py-16 bg-white">
+  <!-- Modern Features Section -->
+  <section class="py-20 bg-surface-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">Why Choose Our Platform?</h2>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-display font-medium text-surface-900 mb-4">Why Choose Our Platform?</h2>
+        <p class="text-lg text-surface-600 max-w-2xl mx-auto">
           Built with modern technology for the best shopping experience
         </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="text-center p-6">
-          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="text-center p-8 bg-white rounded-lg border border-surface-200">
+          <div class="w-16 h-16 bg-brand-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h3 class="text-xl font-semibold mb-3">Lightning Fast</h3>
-          <p class="text-gray-600">Built with Astro for optimal performance and speed</p>
+          <h3 class="text-xl font-medium text-surface-900 mb-3">Lightning Fast</h3>
+          <p class="text-surface-600">Built with Astro for optimal performance and speed</p>
         </div>
 
-        <div class="text-center p-6">
-          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="text-center p-8 bg-white rounded-lg border border-surface-200">
+          <div class="w-16 h-16 bg-accent-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-accent-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <h3 class="text-xl font-semibold mb-3">User Friendly</h3>
-          <p class="text-gray-600">Intuitive design that makes shopping a pleasure</p>
+          <h3 class="text-xl font-medium text-surface-900 mb-3">User Friendly</h3>
+          <p class="text-surface-600">Intuitive design that makes shopping a pleasure</p>
         </div>
 
-        <div class="text-center p-6">
-          <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="text-center p-8 bg-white rounded-lg border border-surface-200">
+          <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <h3 class="text-xl font-semibold mb-3">Secure</h3>
-          <p class="text-gray-600">Your data and transactions are always protected</p>
+          <h3 class="text-xl font-medium text-surface-900 mb-3">Secure</h3>
+          <p class="text-surface-600">Your data and transactions are always protected</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Stores Section -->
-  <section id="stores" class="py-16 bg-gray-50">
+  <!-- Modern Stores Section -->
+  <section id="stores" class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">Featured Stores</h2>
-        <p class="text-lg text-gray-600">Discover amazing stores and their unique products</p>
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-display font-medium text-surface-900 mb-4">Featured Stores</h2>
+        <p class="text-lg text-surface-600">Discover amazing stores and their unique products</p>
       </div>
 
       <div id="stores-container">
         <!-- Loading state -->
         <div id="stores-loading" class="text-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p class="text-gray-600">Loading stores...</p>
+          <div class="animate-spin rounded-lg h-12 w-12 border-2 border-surface-200 border-t-brand-500 mx-auto mb-4"></div>
+          <p class="text-surface-600">Loading stores...</p>
         </div>
 
         <!-- Stores will be loaded here -->
@@ -96,13 +97,13 @@ export const prerender = true;
 
         <!-- Empty state -->
         <div id="stores-empty" class="text-center py-12 hidden">
-          <div class="text-gray-400 mb-4">
+          <div class="text-surface-400 mb-4">
             <svg class="mx-auto h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No stores available yet</h3>
-          <p class="text-gray-600">Check back soon for amazing stores and products!</p>
+          <h3 class="text-lg font-medium text-surface-900 mb-2">No stores available yet</h3>
+          <p class="text-surface-600">Check back soon for amazing stores and products!</p>
         </div>
 
         <!-- Error state -->
@@ -112,25 +113,25 @@ export const prerender = true;
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Unable to load stores</h3>
-          <p class="text-gray-600">Please try refreshing the page</p>
+          <h3 class="text-lg font-medium text-surface-900 mb-2">Unable to load stores</h3>
+          <p class="text-surface-600">Please try refreshing the page</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="bg-indigo-600 text-white py-16">
+  <!-- Modern CTA Section -->
+  <section class="bg-brand-500 text-white py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h2 class="text-3xl font-bold mb-4">Ready to Start Shopping?</h2>
-      <p class="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
+      <h2 class="text-3xl md:text-4xl font-display font-medium mb-4">Ready to Start Shopping?</h2>
+      <p class="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
         Join thousands of satisfied customers and discover your next favorite product
       </p>
       <div id="cta-auth-button">
         <!-- CTA auth button will be populated by JavaScript -->
         <a
           href="/auth/login"
-          class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          class="bg-white text-brand-600 px-8 py-3 rounded-md font-medium hover:bg-surface-100 transition-colors inline-block text-lg"
         >
           Get Started Today
         </a>
@@ -255,16 +256,16 @@ export const prerender = true;
       console.log('User is logged in, updating UI for:', currentUser.email);
 
       authButtonsEl.innerHTML = `
-        <div class="flex items-center gap-4">
-          <span class="text-white">Welcome, ${currentUser.email}</span>
-          <button id="sign-out-btn" class="border-2 border-white text-white px-6 py-2 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
+        <div class="flex items-center gap-3">
+          <span class="text-white/90 text-sm">Hi, ${currentUser.email.split('@')[0]}</span>
+          <button id="sign-out-btn" class="text-white hover:text-white/80 underline text-sm">
             Sign Out
           </button>
         </div>
       `;
 
       ctaAuthButtonEl.innerHTML = `
-        <button id="sign-out-cta-btn" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+        <button id="sign-out-cta-btn" class="bg-white text-brand-600 px-8 py-3 rounded-md font-medium hover:bg-surface-100 transition-colors inline-block text-lg">
           Sign Out
         </button>
       `;
@@ -287,13 +288,13 @@ export const prerender = true;
       console.log('User is not logged in, showing login buttons');
 
       authButtonsEl.innerHTML = `
-        <a href="/auth/login" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
-          Get Started
+        <a href="/auth/login" class="text-white hover:text-white/80 underline">
+          Login
         </a>
       `;
 
       ctaAuthButtonEl.innerHTML = `
-        <a href="/auth/login" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+        <a href="/auth/login" class="bg-white text-brand-600 px-8 py-3 rounded-md font-medium hover:bg-surface-100 transition-colors inline-block text-lg">
           Get Started Today
         </a>
       `;
@@ -393,18 +394,18 @@ export const prerender = true;
           const hasProducts = productCount > 0;
 
           return `
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-              <div class="h-48 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+            <div class="bg-white rounded-lg border border-surface-200 overflow-hidden hover:border-brand-300 transition-colors duration-300">
+              <div class="h-48 bg-gradient-to-r from-brand-500 to-accent-500 relative">
                 ${store.logoUrl ? `<img src="${store.logoUrl}" alt="${store.name}" class="absolute inset-0 w-full h-full object-cover">` : ''}
               </div>
               <div class="p-6">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">${store.name}</h3>
-                <p class="text-gray-600 mb-4">${store.description || 'Discover amazing products and deals'}</p>
+                <h3 class="text-xl font-medium text-surface-900 mb-2">${store.name}</h3>
+                <p class="text-surface-600 mb-4">${store.description || 'Discover amazing products and deals'}</p>
                 <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-500">${hasProducts ? `${productCount}+ products` : 'New store'}</span>
+                  <span class="text-sm text-surface-500">${hasProducts ? `${productCount}+ products` : 'New store'}</span>
                   <a
                     href="/store/${store.id}/"
-                    class="inline-block bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 transition-colors"
+                    class="btn-primary px-4 py-2"
                   >
                     Visit Store
                   </a>
