@@ -186,29 +186,30 @@ export const prerender = true;
     // Periodic auth check (every 30 seconds)
     setInterval(checkAuthState, 30000);
 
-    // Load stores data
-    console.log('Setting up stores loading...');
-    try {
-      // Use simple InstaQL query - limit and order only work on top-level
-      console.log('Setting up stores subscription...');
-      const storesQuery = {
-        storefronts: {
-          $: {
-            order: { serverCreatedAt: 'desc' },
-            limit: 12 // Limit to 12 featured stores
-          },
-          products: {} // Get all products for each store (no nested limit allowed)
-        }
-      };
+    // Load stores data using queryOnce for faster loading
+    console.log('Loading stores with queryOnce...');
+    async function loadStores() {
+      try {
+        // Use simple InstaQL query - limit and order only work on top-level
+        const storesQuery = {
+          storefronts: {
+            $: {
+              order: { serverCreatedAt: 'desc' },
+              limit: 12 // Limit to 12 featured stores
+            },
+            products: {} // Get all products for each store (no nested limit allowed)
+          }
+        };
 
-      db.subscribeQuery(storesQuery, (resp) => {
-        console.log('Stores subscription response:', resp);
+        console.log('Querying stores once...');
+        const resp = await db.queryOnce(storesQuery);
+        console.log('Stores queryOnce response:', resp);
 
         // Hide loading state
         loadingEl.classList.add('hidden');
 
         if (resp.error) {
-          console.error('Error in stores subscription:', resp.error);
+          console.error('Error in stores query:', resp.error);
           errorEl.classList.remove('hidden');
           return;
         }
@@ -256,12 +257,15 @@ export const prerender = true;
 
         gridEl.classList.remove('hidden');
         console.log('Stores rendered successfully');
-      });
-    } catch (error) {
-      console.error('Error initializing stores loading:', error);
-      loadingEl.classList.add('hidden');
-      errorEl.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading stores:', error);
+        loadingEl.classList.add('hidden');
+        errorEl.classList.remove('hidden');
+      }
     }
+
+    // Load stores
+    loadStores();
   });
 
   // Clean up on page unload

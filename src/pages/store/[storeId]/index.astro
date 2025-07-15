@@ -237,20 +237,21 @@ export const prerender = false;
     }
   }
 
-  // Function to load products directly by storeId
-  function loadProductsDirectly() {
-    const currentStoreId = window.currentStoreId || storeId;
-    const productsQuery = {
-      products: {
-        $: {
-          where: { storeId: currentStoreId }
+  // Function to load products directly by storeId using queryOnce
+  async function loadProductsDirectly() {
+    try {
+      const currentStoreId = window.currentStoreId || storeId;
+      const productsQuery = {
+        products: {
+          $: {
+            where: { storeId: currentStoreId }
+          }
         }
-      }
-    };
+      };
 
-    console.log('Querying products directly for storeId:', currentStoreId);
+      console.log('Querying products directly for storeId:', currentStoreId);
 
-    db.subscribeQuery(productsQuery, (resp) => {
+      const resp = await db.queryOnce(productsQuery);
       console.log('Direct products query response:', resp);
 
       if (resp.error) {
@@ -269,56 +270,55 @@ export const prerender = false;
         // Try to get all products as a test
         const allProductsQuery = { products: {} };
 
-        db.subscribeQuery(allProductsQuery, (allProductsResp) => {
-          console.log('All products query response:', allProductsResp);
+        const allProductsResp = await db.queryOnce(allProductsQuery);
+        console.log('All products query response:', allProductsResp);
 
-          const allProducts = allProductsResp.data?.products || [];
-          console.log('All products found:', allProducts);
+        const allProducts = allProductsResp.data?.products || [];
+        console.log('All products found:', allProducts);
 
-          if (allProducts.length > 0) {
-            // Filter products for this store manually
-            const storeProducts = allProducts.filter(p => p.storeId === currentStoreId);
-            console.log('Filtered products for store:', storeProducts);
+        if (allProducts.length > 0) {
+          // Filter products for this store manually
+          const storeProducts = allProducts.filter(p => p.storeId === currentStoreId);
+          console.log('Filtered products for store:', storeProducts);
 
-            if (storeProducts.length > 0) {
-              renderDefaultContent(storeProducts);
-            } else {
-              renderDefaultContent([]);
-            }
+          if (storeProducts.length > 0) {
+            renderDefaultContent(storeProducts);
           } else {
             renderDefaultContent([]);
           }
-        });
-      }
-    });
-  }
-
-  // Load store data with products and pages using proper InstaQL
-  function loadStore() {
-    // Use the current store ID from the window object
-    const currentStoreId = window.currentStoreId || storeId;
-    console.log('Loading store with currentStoreId:', currentStoreId);
-
-    // Use subscribeQuery method to get store data with products
-    const storeQuery = {
-      storefronts: {
-        $: {
-          where: { id: currentStoreId }
-        },
-        products: {}, // Get all products for this store via the link relationship
-        pages: {
-          blocks: {} // Get all blocks for each page
+        } else {
+          renderDefaultContent([]);
         }
       }
-    };
-
-    console.log('Querying store with ID:', currentStoreId);
-
-    if (storeUnsubscribe) {
-      storeUnsubscribe();
+    } catch (error) {
+      console.error('Error in loadProductsDirectly:', error);
+      renderDefaultContent([]);
     }
+  }
 
-    storeUnsubscribe = db.subscribeQuery(storeQuery, (resp) => {
+  // Load store data with products and pages using queryOnce for better performance
+  async function loadStore() {
+    try {
+      // Use the current store ID from the window object
+      const currentStoreId = window.currentStoreId || storeId;
+      console.log('Loading store with currentStoreId:', currentStoreId);
+
+      // Use queryOnce method to get store data with products
+      const storeQuery = {
+        storefronts: {
+          $: {
+            where: { id: currentStoreId }
+          },
+          products: {}, // Get all products for this store via the link relationship
+          pages: {
+            blocks: {} // Get all blocks for each page
+          }
+        }
+      };
+
+      console.log('Querying store with ID:', currentStoreId);
+
+      const resp = await db.queryOnce(storeQuery);
       hideElement(storeLoadingEl);
 
       console.log('Query response:', resp);
@@ -375,12 +375,16 @@ export const prerender = false;
         // If no products found via link, try direct query
         if (allProducts.length === 0) {
           console.log('No products found via link, trying direct query...');
-          loadProductsDirectly();
+          await loadProductsDirectly();
         } else {
           renderDefaultContent(allProducts);
         }
       }
-    });
+    } catch (error) {
+      console.error('Error loading store data:', error);
+      hideElement(storeLoadingEl);
+      showElement(storeNotFoundEl);
+    }
   }
 
   // Render blocks for the store page
