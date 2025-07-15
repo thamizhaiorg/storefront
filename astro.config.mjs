@@ -1,14 +1,16 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
+import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
   // Enable Tailwind CSS
   integrations: [tailwind()],
 
-  // Output configuration - use 'server' to allow server-side API routes
-  output: 'server',
+  // Output configuration for Cloudflare Pages
+  output: 'server', // Use server for Cloudflare Pages
+  adapter: cloudflare(),
 
   // Build configuration
   build: {
@@ -40,8 +42,8 @@ export default defineConfig({
     }
   },
 
-  // Site configuration
-  site: 'https://your-domain.com', // Update this with your actual domain
+  // Site configuration - update this with your actual domain
+  site: process.env.PUBLIC_PLATFORM_DOMAIN ? `https://${process.env.PUBLIC_PLATFORM_DOMAIN}` : 'https://your-storefront.pages.dev',
 
   // Redirects for better SEO
   redirects: {

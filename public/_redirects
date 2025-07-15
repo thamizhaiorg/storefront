@@ -1,0 +1,12 @@
+# Redirect admin and dashboard to login
+/admin /auth/login 302
+/dashboard /auth/login 302
+
+# Handle dynamic store routes
+/store/* /store/[storeId]/index.html 200
+
+# Handle checkout routes
+/store/*/checkout /store/[storeId]/checkout.html 200
+
+# SPA fallback for client-side routing
+/* /index.html 200

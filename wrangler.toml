@@ -1,0 +1,22 @@
+name = "storefront"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "storefront-production"
+
+[env.preview]
+name = "storefront-preview"
+
+# Pages configuration
+pages_build_output_dir = "dist"
+
+# Environment variables (these will be set in Cloudflare Pages dashboard)
+# PUBLIC_INSTANT_APP_ID = "your-instant-app-id"
+# PUBLIC_R2_ACCOUNT_ID = "your-r2-account-id"
+# PUBLIC_R2_ACCESS_KEY_ID = "your-r2-access-key"
+# PUBLIC_R2_SECRET_ACCESS_KEY = "your-r2-secret-key"
+# PUBLIC_R2_BUCKET_NAME = "your-bucket-name"
+# PUBLIC_R2_REGION = "auto"
+# PUBLIC_R2_ENDPOINT = "your-r2-endpoint"
+# PUBLIC_PLATFORM_DOMAIN = "your-domain.com"

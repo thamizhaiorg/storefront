@@ -6,9 +6,14 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "verify": "node scripts/verify-build.js",
+    "deploy": "npm run build && npm run verify && wrangler pages deploy dist",
+    "deploy:preview": "npm run build && npm run verify && wrangler pages deploy dist --env preview",
+    "deploy:production": "npm run build && npm run verify && wrangler pages deploy dist --env production"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
     "@astrojs/tailwind": "^6.0.2",
     "@aws-sdk/client-s3": "^3.0.0",
     "@instantdb/core": "^0.20.8",
